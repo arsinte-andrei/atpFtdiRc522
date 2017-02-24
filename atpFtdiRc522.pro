@@ -24,11 +24,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        widget.cpp
+        widget.cpp \
+    MFRC522.cpp
 
 HEADERS  += widget.h \
     ftd2xx.h \
     libMPSSE_spi.h \
-    WinTypes.h
+    WinTypes.h \
+    MFRC522.h
 
 FORMS    += widget.ui

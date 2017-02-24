@@ -4,7 +4,7 @@
  * \author FTDI
  * \date 20110527
  *
- * Copyright © 2000-2014 Future Technology Devices International Limited
+ * Copyright 2000-2014 Future Technology Devices International Limited
  *
  *
  * THIS SOFTWARE IS PROVIDED BY FUTURE TECHNOLOGY DEVICES INTERNATIONAL LIMITED ``AS IS'' AND ANY EXPRESS
@@ -146,25 +146,23 @@ typedef struct ChannelConfig_t
 /*								Function declarations						  */
 /******************************************************************************/
 FTDI_API FT_STATUS SPI_GetNumChannels(uint32 *numChannels);
-FTDI_API FT_STATUS SPI_GetChannelInfo(uint32 index,
-	FT_DEVICE_LIST_INFO_NODE *chanInfo);
+FTDI_API FT_STATUS SPI_GetChannelInfo(uint32 index,	FT_DEVICE_LIST_INFO_NODE *chanInfo);
 FTDI_API FT_STATUS SPI_OpenChannel(uint32 index, FT_HANDLE *handle);
 FTDI_API FT_STATUS SPI_InitChannel(FT_HANDLE handle, ChannelConfig *config);
 FTDI_API FT_STATUS SPI_CloseChannel(FT_HANDLE handle);
-FTDI_API FT_STATUS SPI_Read(FT_HANDLE handle, uint8 *buffer,
-	uint32 sizeToTransfer, uint32 *sizeTransfered, uint32 options);
-FTDI_API FT_STATUS SPI_Write(FT_HANDLE handle, uint8 *buffer,
-	uint32 sizeToTransfer, uint32 *sizeTransfered, uint32 options);
-FTDI_API FT_STATUS SPI_ReadWrite(FT_HANDLE handle, uint8 *inBuffer,
-	uint8 *outBuffer, uint32 sizeToTransfer, uint32 *sizeTransferred,
-	uint32 transferOptions);
+FTDI_API FT_STATUS SPI_Read(FT_HANDLE handle, uint8 *buffer, uint32 sizeToTransfer, uint32 *sizeTransfered, uint32 options);
+FTDI_API FT_STATUS SPI_Write(FT_HANDLE handle, uint8 *buffer, uint32 sizeToTransfer, uint32 *sizeTransfered, uint32 options);
+FTDI_API FT_STATUS SPI_ReadWrite(FT_HANDLE handle, uint8 *inBuffer, uint8 *outBuffer, uint32 sizeToTransfer, uint32 *sizeTransferred, uint32 transferOptions);
 FTDI_API FT_STATUS SPI_IsBusy(FT_HANDLE handle, bool *state);
+FTDI_API FT_STATUS SPI_ChangeCS(FT_HANDLE handle, uint32 configOptions);
+FTDI_API FT_STATUS SPI_ToggleCS(FT_HANDLE handle, bool state);
+
 FTDI_API void Init_libMPSSE(void);
 FTDI_API void Cleanup_libMPSSE(void);
-FTDI_API FT_STATUS SPI_ChangeCS(FT_HANDLE handle, uint32 configOptions);
+
 FTDI_API FT_STATUS FT_WriteGPIO(FT_HANDLE handle, uint8 dir, uint8 value);
 FTDI_API FT_STATUS FT_ReadGPIO(FT_HANDLE handle,uint8 *value);
-FTDI_API FT_STATUS SPI_ToggleCS(FT_HANDLE handle, bool state);
+
 
 
 

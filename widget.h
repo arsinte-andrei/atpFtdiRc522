@@ -2,11 +2,10 @@
 #define WIDGET_H
 
 #include <QWidget>
-#include <Windows.h>
 
+#include <Windows.h>
 /* Include D2XX header*/
 #include "ftd2xx.h"
-
 /* Include libMPSSE header */
 #include "libMPSSE_spi.h"
 
