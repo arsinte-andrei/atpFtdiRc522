@@ -13,7 +13,7 @@
 #include "libMPSSE_spi.h"
 
 #define  DEFAULT_SPI_SPEED 5000L
-#define  PIN RPI_V2_GPIO_P1_22
+//TODO #define  PIN RPI_V2_GPIO_P1_22
 /**
  * Constructor.
  * Prepares the output pins
@@ -23,9 +23,7 @@ MFRC522::MFRC522(QObject *parent) : QObject(parent){
 // End constructor
 
 void MFRC522::postConstruct() {
-    if (!bcm2835_init()) {
-        printf("Couldn't Initialise BCM2835 gpio in Constructor...\n");
-    }
+
     bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(PIN, LOW);
 
