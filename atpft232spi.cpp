@@ -1,8 +1,16 @@
 #include "atpft232spi.h"
 #include <QLibrary>
 #include <QDebug>
+#include <QTime>
+#include <QCoreApplication>
+
+#define  DEFAULT_SPI_SPEED 5000L
 
 atpFt232Spi::atpFt232Spi(QObject *parent) : QObject(parent) {
+
+    uint16_t SPI_SPEED;
+    SPI_SPEED = (uint16_t)(250000L / DEFAULT_SPI_SPEED);
+
     FT_STATUS status = FT_OK;
     FT_DEVICE_LIST_INFO_NODE devList = {0};
     ChannelConfig channelConf = {0};
@@ -12,13 +20,12 @@ atpFt232Spi::atpFt232Spi(QObject *parent) : QObject(parent) {
     uint8 i = 0;
     uint8 latency = 255;
 
-    channelConf.ClockRate = 5000;
+    channelConf.ClockRate = SPI_SPEED;
     channelConf.LatencyTimer = latency;
     channelConf.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;// | SPI_CONFIG_OPTION_CS_ACTIVELOW;
     channelConf.Pin = 0x00000000;/*FinalVal-FinalDir-InitVal-InitDir (for dir 0=in, 1=out)*/
 
     /* load library */
-
     if (QLibrary::isLibrary("libMPSSE.dll")) {
       QLibrary lib("libMPSSE.dll");
       if(lib.load()){
@@ -31,15 +38,21 @@ atpFt232Spi::atpFt232Spi(QObject *parent) : QObject(parent) {
 
           p_SPI_InitChannel = (pfunc_SPI_InitChannel)lib.resolve("SPI_InitChannel");
 
+          p_SPI_CloseChannel = (pfunc_SPI_CloseChannel)lib.resolve("SPI_CloseChannel");
+
           p_SPI_Read = (pfunc_SPI_Read)lib.resolve("SPI_Read");
 
           p_SPI_Write = (pfunc_SPI_Write)lib.resolve("SPI_Write");
 
-          p_SPI_CloseChannel = (pfunc_SPI_CloseChannel)lib.resolve("SPI_CloseChannel");
+          p_SPI_ReadWrite = (pfunc_SPI_ReadWrite)lib.resolve("SPI_ReadWrite");
 
           p_SPI_IsBusy = (pfunc_SPI_IsBusy)lib.resolve("SPI_IsBusy");
 
-          p_SPI_ReadWrite = (pfunc_SPI_ReadWrite)lib.resolve("SPI_ReadWrite");
+          p_SPI_ChangeCS = (pfunc_SPI_ChangeCS)lib.resolve("SPI_ChangeCS");
+
+          p_FT_WriteGPIO = (pfunc_FT_WriteGPIO)lib.resolve("FT_WriteGPIO");
+
+          p_FT_ReadGPIO = (pfunc_FT_ReadGPIO)lib.resolve("FT_ReadGPIO");
 
       }
 
@@ -276,4 +289,11 @@ FT_STATUS atpFt232Spi::write_byte(uint8 slaveAddress, uint8 address, uint16 data
         SPI_TRANSFER_OPTIONS_CHIPSELECT_ENABLE|
         SPI_TRANSFER_OPTIONS_CHIPSELECT_DISABLE);
     return status;
+}
+
+void atpFt232Spi::delay( int millisecondsToWait ) {
+    QTime dieTime = QTime::currentTime().addMSecs( millisecondsToWait );
+    while( QTime::currentTime() < dieTime ) {
+        QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
+    }
 }

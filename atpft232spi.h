@@ -28,6 +28,11 @@ public:
     #define DATA_OFFSET				4
     #define USE_WRITEREAD			0
 
+
+    /******************************************************************************/
+    /*                                  	SPI         						  */
+    /******************************************************************************/
+
     typedef FT_STATUS (*pfunc_SPI_GetNumChannels)(uint32 *numChannels);
     pfunc_SPI_GetNumChannels p_SPI_GetNumChannels;
 
@@ -49,14 +54,27 @@ public:
     typedef FT_STATUS (*pfunc_SPI_Write)(FT_HANDLE handle, uint8 *buffer, uint32 sizeToTransfer, uint32 *sizeTransfered, uint32 options);
     pfunc_SPI_Write p_SPI_Write;
 
-    typedef FT_STATUS (*pfunc_SPI_IsBusy)(FT_HANDLE handle, bool *state);
-    pfunc_SPI_IsBusy p_SPI_IsBusy;
-
     typedef FT_STATUS (*pfunc_SPI_ReadWrite)(FT_HANDLE handle, uint8 *inBuffer, uint8 *outBuffer, uint32 sizeToTransfer, uint32 *sizeTransferred, uint32 transferOptions);
     pfunc_SPI_ReadWrite p_SPI_ReadWrite;
 
+    typedef FT_STATUS (*pfunc_SPI_IsBusy)(FT_HANDLE handle, bool *state);
+    pfunc_SPI_IsBusy p_SPI_IsBusy;
+
+    typedef FT_STATUS (*pfunc_SPI_ChangeCS)(FT_HANDLE handle, uint32 configOptions);
+    pfunc_SPI_ChangeCS p_SPI_ChangeCS;
+
     /******************************************************************************/
-    /*								Global variables							  	    */
+    /*                                  	GPIO         						  */
+    /******************************************************************************/
+
+    typedef FT_STATUS (*pfunc_FT_WriteGPIO)(FT_HANDLE handle, uint8 dir, uint8 value);
+    pfunc_FT_WriteGPIO p_FT_WriteGPIO;
+
+    typedef FT_STATUS (*pfunc_FT_ReadGPIO)(FT_HANDLE handle, uint8 *value);
+    pfunc_FT_ReadGPIO p_FT_ReadGPIO;
+
+    /******************************************************************************/
+    /*								Global variables							  */
     /******************************************************************************/
     FT_HANDLE ftHandle;
     uint8 buffer[SPI_DEVICE_BUFFER_SIZE] = {0};
@@ -66,6 +84,7 @@ public slots:
     FT_STATUS read_byte(uint8 slaveAddress, uint8 address, uint16 *data);
     FT_STATUS write_byte(uint8 slaveAddress, uint8 address, uint16 data);
 
+    void delay(int millisecondsToWait);
 signals:
 
 private:

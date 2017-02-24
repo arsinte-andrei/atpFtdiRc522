@@ -1,31 +1,26 @@
 /*
-* MFRC522.cpp - Library to use Raspberry Pi 2 B with 13.56 MHZ WITH TAGS SPI W AND R BY Elgolondrino.
+* MFRC522.cpp - Library to use FT232H with 13.56 MHZ WITH TAGS SPI BY Andrei Arsinte
 */
 
 #include <QDebug>
 #include <MFRC522.h>
 #include <cstdio>
 
-#include <Windows.h>
-/* Include D2XX header*/
-#include "ftd2xx.h"
-/* Include libMPSSE header */
-#include "libMPSSE_spi.h"
-
-#define  DEFAULT_SPI_SPEED 5000L
+//TODO - #define  DEFAULT_SPI_SPEED 5000L
 //TODO #define  PIN RPI_V2_GPIO_P1_22
 /**
  * Constructor.
  * Prepares the output pins
  */
 MFRC522::MFRC522(QObject *parent) : QObject(parent){
+    atpFtdi = new atpFt232Spi();
 }
 // End constructor
 
 void MFRC522::postConstruct() {
 
-    bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(PIN, LOW);
+//TODO    bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
+//TODO    bcm2835_gpio_write(PIN, LOW);
 
     // Set SPI bus to work with MFRC522 chip.
     setSPIConfig();
@@ -38,14 +33,14 @@ void MFRC522::postConstruct() {
  */
 void MFRC522::setSPIConfig() {
 
-    uint16_t SPI_SPEED;
-    SPI_SPEED = (uint16_t)(250000L / DEFAULT_SPI_SPEED);
-    bcm2835_spi_begin();
-    bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      // The default
-    bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);                   // The default
-    bcm2835_spi_setClockDivider(SPI_SPEED); 			  // The default
-    bcm2835_spi_chipSelect(BCM2835_SPI_CS0);                      // The default
-    bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);      // the default
+//    uint16_t SPI_SPEED;
+//    SPI_SPEED = (uint16_t)(250000L / DEFAULT_SPI_SPEED);
+//TODO    bcm2835_spi_begin();
+//TODO    bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      // The default
+//TODO -   bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);                   // The default
+//TODO    bcm2835_spi_setClockDivider(SPI_SPEED); 			  // The default
+//TODO    bcm2835_spi_chipSelect(BCM2835_SPI_CS0);                      // The default
+//TODO    bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);      // the default
 } // End setSPIConfig()
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +57,7 @@ void MFRC522::PCD_WriteRegister(	byte reg,		///< The register to write to. One o
     char buff[2];
     buff[0] = (char)((reg) & 0x7E);
     buff[1] = (char)value;
-    bcm2835_spi_transfern(buff, 2);
+//TODO    bcm2835_spi_transfern(buff, 2);
 } // End PCD_WriteRegister()
 
 /**
@@ -86,7 +81,7 @@ byte MFRC522::PCD_ReadRegister(	byte reg	///< The register to read from. One of 
                               ) {
     char buff[2];
     buff[0] = ((reg) & 0x7E) | 0x80;
-    bcm2835_spi_transfern(buff, 2);
+//TODO    bcm2835_spi_transfern(buff, 2);
     return (uint8_t)buff[1];
 
 } // End PCD_ReadRegister()
@@ -107,7 +102,7 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 	byte address = 0x80 | (reg & 0x7E);		// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
 	byte index = 0;							// Index in values array.
 	count--;								// One read is performed outside of the loop
-    bcm2835_spi_transfer(address);
+//TODO    bcm2835_spi_transfer(address);
 	while (index < count) {
 		if (index == 0 && rxAlign) {		// Only update bit positions rxAlign..7 in values[0]
 			// Create bit mask for bit positions rxAlign..7
@@ -116,16 +111,16 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 				mask |= (1 << i);
 			}
 			// Read value and tell that we want to read the same address again.    
-            byte value = bcm2835_spi_transfer(address);
+//TODO            byte value = bcm2835_spi_transfer(address);
 			// Apply mask to both current value of values[0] and the new data in value.
-			values[0] = (values[index] & ~mask) | (value & mask);
+//TODO			values[0] = (values[index] & ~mask) | (value & mask);
 		}
 		else { // Normal case           
-           values[index] = bcm2835_spi_transfer(address);     // Read value and tell that we want to read the same address again.
+//TODO           values[index] = bcm2835_spi_transfer(address);     // Read value and tell that we want to read the same address again.
 		}
 		index++;
 	}
-    values[index] = bcm2835_spi_transfer(0);                  // Read the final byte. Send 0 to stop reading.
+//TODO    values[index] = bcm2835_spi_transfer(0);                  // Read the final byte. Send 0 to stop reading.
 } // End PCD_ReadRegister()
 
 /**
@@ -154,7 +149,7 @@ void MFRC522::PCD_ClearRegisterBitMask(	byte reg,	///< The register to update. O
 /**
  * Use the CRC coprocessor in the MFRC522 to calculate a CRC_A.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to transfer to the FIFO for CRC calculation.
 								byte length,	///< In: The number of bytes to transfer.
@@ -175,7 +170,7 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
 			break;
 		}
 		if (--i == 0) {						// The emergency break. We will eventually terminate on this one after 89ms. Communication with the MFRC522 might be down.
-			return STATUS_TIMEOUT;
+            return RC_STATUS_TIMEOUT;
 		}
 	}
 	PCD_WriteRegister(CommandReg, PCD_Idle);		// Stop calculating CRC for new content in the FIFO.
@@ -183,7 +178,7 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
 	// Transfer the result from the registers to the result buffer
 	result[0] = PCD_ReadRegister(CRCResultRegL);
 	result[1] = PCD_ReadRegister(CRCResultRegH);
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End PCD_CalculateCRC()
 
 
@@ -195,13 +190,14 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
  * Initializes the MFRC522 chip.
  */
 void MFRC522::PCD_Init() {
-    if(bcm2835_gpio_lev(PIN) == LOW) {   //The MFRC522 chip is in power down mode.
-        bcm2835_gpio_write(PIN, HIGH);   // Exit power down mode. This triggers a hard reset.
-        delay(50);                       // Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
-	}
-	else { // Perform a soft reset
+    //TODO acceseaza pin si da power
+//    if(bcm2835_gpio_lev(PIN) == LOW) {   //The MFRC522 chip is in power down mode.
+//        bcm2835_gpio_write(PIN, HIGH);   // Exit power down mode. This triggers a hard reset.
+        atpFtdi->delay(50);                       // Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
+//	}
+//	else { // Perform a soft reset
 		PCD_Reset();
-	}
+//	}
 	
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// f_timer = 13.56 MHz / (2*TPreScaler+1) where TPreScaler = [TPrescaler_Hi:TPrescaler_Lo].
@@ -224,7 +220,7 @@ void MFRC522::PCD_Reset() {
 	// The datasheet does not mention how long the SoftRest command takes to complete.
 	// But the MFRC522 might have been in soft power-down mode (triggered by bit 4 of CommandReg) 
 	// Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
-	delay(50);
+    atpFtdi->delay(50);
 	// Wait for the PowerDown bit in CommandReg to be cleared
 	while (PCD_ReadRegister(CommandReg) & (1<<4)) {
 		// PCD still restarting - unlikely after waiting 50ms, but better safe than sorry.
@@ -354,7 +350,7 @@ bool MFRC522::PCD_PerformSelfTest() {
  * Executes the Transceive command.
  * CRC validation can only be done if backData and backLen are specified.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PCD_TransceiveData(	byte *sendData,		///< Pointer to the data to transfer to the FIFO.
 									byte sendLen,		///< Number of bytes to transfer to the FIFO.
@@ -372,7 +368,7 @@ byte MFRC522::PCD_TransceiveData(	byte *sendData,		///< Pointer to the data to t
  * Transfers data to the MFRC522 FIFO, executes a command, waits for completion and transfers data back from the FIFO.
  * CRC validation can only be done if backData and backLen are specified.
  *
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The command to execute. One of the PCD_Command enums.
 										byte waitIRq,		///< The bits in the ComIrqReg register that signals successful completion of the command.
@@ -411,24 +407,24 @@ byte MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The command to execut
 			break;
 		}
 		if (n & 0x01) {						// Timer interrupt - nothing received in 25ms
-			return STATUS_TIMEOUT;
+            return RC_STATUS_TIMEOUT;
 		}
 		if (--i == 0) {						// The emergency break. If all other condions fail we will eventually terminate on this one after 35.7ms. Communication with the MFRC522 might be down.
-			return STATUS_TIMEOUT;
+            return RC_STATUS_TIMEOUT;
 		}
 	}
 	
 	// Stop now if any errors except collisions were detected.
 	byte errorRegValue = PCD_ReadRegister(ErrorReg); // ErrorReg[7..0] bits are: WrErr TempErr reserved BufferOvfl CollErr CRCErr ParityErr ProtocolErr
 	if (errorRegValue & 0x13) {	 // BufferOvfl ParityErr ProtocolErr
-		return STATUS_ERROR;
+        return RC_STATUS_ERROR;
 	}	
 
 	// If the caller wants data back, get it from the MFRC522.
 	if (backData && backLen) {
 		n = PCD_ReadRegister(FIFOLevelReg);			// Number of bytes in the FIFO
 		if (n > *backLen) {
-			return STATUS_NO_ROOM;
+            return RC_STATUS_NO_ROOM;
 		}
 		*backLen = n;											// Number of bytes returned
 		PCD_ReadRegister(FIFODataReg, n, backData, rxAlign);	// Get received data from FIFO
@@ -440,83 +436,83 @@ byte MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The command to execut
 	
 	// Tell about collisions
 	if (errorRegValue & 0x08) {		// CollErr
-		return STATUS_COLLISION;
+        return RC_STATUS_COLLISION;
 	}
 	
 	// Perform CRC_A validation if requested.
 	if (backData && backLen && checkCRC) {
 		// In this case a MIFARE Classic NAK is not OK.
 		if (*backLen == 1 && _validBits == 4) {
-			return STATUS_MIFARE_NACK;
+            return RC_STATUS_MIFARE_NACK;
 		}
 		// We need at least the CRC_A value and all 8 bits of the last byte must be received.
 		if (*backLen < 2 || _validBits != 0) {
-			return STATUS_CRC_WRONG;
+            return RC_STATUS_CRC_WRONG;
 		}
 		// Verify CRC_A - do our own calculation and store the control in controlBuffer.
 		byte controlBuffer[2]; 
 		n = PCD_CalculateCRC(&backData[0], *backLen - 2, &controlBuffer[0]);
-		if (n != STATUS_OK) {
+        if (n != RC_STATUS_OK) {
 			return n;
 		}
 		if ((backData[*backLen - 2] != controlBuffer[0]) || (backData[*backLen - 1] != controlBuffer[1])) {
-			return STATUS_CRC_WRONG;
+            return RC_STATUS_CRC_WRONG;
 		}
 	}
 	
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End PCD_CommunicateWithPICC()
 
 /**
  * Transmits a REQuest command, Type A. Invites PICCs in state IDLE to go to READY and prepare for anticollision or selection. 7 bit frame.
- * Beware: When two PICCs are in the field at the same time I often get STATUS_TIMEOUT - probably due do bad antenna design.
+ * Beware: When two PICCs are in the field at the same time I often get RC_STATUS_TIMEOUT - probably due do bad antenna design.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PICC_RequestA(byte *bufferATQA,	///< The buffer to store the ATQA (Answer to request) in
-							byte *bufferSize	///< Buffer size, at least two bytes. Also number of bytes returned if STATUS_OK.
+                            byte *bufferSize	///< Buffer size, at least two bytes. Also number of bytes returned if RC_STATUS_OK.
 							) {
 	return PICC_REQA_or_WUPA(PICC_CMD_REQA, bufferATQA, bufferSize);
 } // End PICC_RequestA()
 
 /**
  * Transmits a Wake-UP command, Type A. Invites PICCs in state IDLE and HALT to go to READY(*) and prepare for anticollision or selection. 7 bit frame.
- * Beware: When two PICCs are in the field at the same time I often get STATUS_TIMEOUT - probably due do bad antenna design.
+ * Beware: When two PICCs are in the field at the same time I often get RC_STATUS_TIMEOUT - probably due do bad antenna design.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PICC_WakeupA(	byte *bufferATQA,	///< The buffer to store the ATQA (Answer to request) in
-							byte *bufferSize	///< Buffer size, at least two bytes. Also number of bytes returned if STATUS_OK.
+                            byte *bufferSize	///< Buffer size, at least two bytes. Also number of bytes returned if RC_STATUS_OK.
 							) {
 	return PICC_REQA_or_WUPA(PICC_CMD_WUPA, bufferATQA, bufferSize);
 } // End PICC_WakeupA()
 
 /**
  * Transmits REQA or WUPA commands.
- * Beware: When two PICCs are in the field at the same time I often get STATUS_TIMEOUT - probably due do bad antenna design.
+ * Beware: When two PICCs are in the field at the same time I often get RC_STATUS_TIMEOUT - probably due do bad antenna design.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */ 
 byte MFRC522::PICC_REQA_or_WUPA(	byte command, 		///< The command to send - PICC_CMD_REQA or PICC_CMD_WUPA
 									byte *bufferATQA,	///< The buffer to store the ATQA (Answer to request) in
-									byte *bufferSize	///< Buffer size, at least two bytes. Also number of bytes returned if STATUS_OK.
+                                    byte *bufferSize	///< Buffer size, at least two bytes. Also number of bytes returned if RC_STATUS_OK.
 							   ) {
 	byte validBits;
 	byte status;
 	
 	if (bufferATQA == NULL || *bufferSize < 2) {	// The ATQA response is 2 bytes long.
-		return STATUS_NO_ROOM;
+        return RC_STATUS_NO_ROOM;
 	}
 	PCD_ClearRegisterBitMask(CollReg, 0x80);		// ValuesAfterColl=1 => Bits received after collision are cleared.
 	validBits = 7;									// For REQA and WUPA we need the short frame format - transmit only 7 bits of the last (and only) byte. TxLastBits = BitFramingReg[2..0]
 	status = PCD_TransceiveData(&command, 1, bufferATQA, bufferSize, &validBits);
-	if (status != STATUS_OK) {
+    if (status != RC_STATUS_OK) {
 		return status;
 	}
 	if (*bufferSize != 2 || validBits != 0) {		// ATQA must be exactly 16 bits.
-		return STATUS_ERROR;
+        return RC_STATUS_ERROR;
 	}
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End PICC_REQA_or_WUPA()
 
 /**
@@ -534,7 +530,7 @@ byte MFRC522::PICC_REQA_or_WUPA(	byte command, 		///< The command to send - PICC
  * 		double				 7						2				MIFARE Ultralight
  * 		triple				10						3				Not currently in use?
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally output, but can also be used to supply a known UID.
 							byte validBits		///< The number of known UID bits supplied in *uid. Normally 0. If set you must also supply uid->size.
@@ -579,7 +575,7 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 	
 	// Sanity checks
 	if (validBits > 80) {
-		return STATUS_INVALID;
+        return RC_STATUS_INVALID;
 	}
 
 	// Prepare MFRC522
@@ -609,7 +605,7 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 				break;
 			
 			default:
-				return STATUS_INTERNAL_ERROR;
+                return RC_STATUS_INTERNAL_ERROR;
 				break;
 		}
 		
@@ -649,7 +645,7 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 				buffer[6] = buffer[2] ^ buffer[3] ^ buffer[4] ^ buffer[5];
 				// Calculate CRC_A
 				result = PCD_CalculateCRC(buffer, 7, &buffer[7]);
-				if (result != STATUS_OK) {
+                if (result != RC_STATUS_OK) {
 					return result;
 				}
 				txLastBits		= 0; // 0 => All 8 bits are valid.
@@ -676,17 +672,17 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 
 			// Transmit the buffer and receive the response.
 			result = PCD_TransceiveData(buffer, bufferUsed, responseBuffer, &responseLength, &txLastBits, rxAlign);			
-			if (result == STATUS_COLLISION) { // More than one PICC in the field => collision.
+            if (result == RC_STATUS_COLLISION) { // More than one PICC in the field => collision.
 				result = PCD_ReadRegister(CollReg); // CollReg[7..0] bits are: ValuesAfterColl reserved CollPosNotValid CollPos[4:0]
 				if (result & 0x20) { // CollPosNotValid
-					return STATUS_COLLISION; // Without a valid collision position we cannot continue
+                    return RC_STATUS_COLLISION; // Without a valid collision position we cannot continue
 				}
 				byte collisionPos = result & 0x1F; // Values 0-31, 0 means bit 32.
 				if (collisionPos == 0) {
 					collisionPos = 32;
 				}
 				if (collisionPos <= currentLevelKnownBits) { // No progress - should not happen 
-					return STATUS_INTERNAL_ERROR;
+                    return RC_STATUS_INTERNAL_ERROR;
 				}
 				// Choose the PICC with the bit set.
 				currentLevelKnownBits = collisionPos;
@@ -694,10 +690,10 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 				index			= 1 + (currentLevelKnownBits / 8) + (count ? 1 : 0); // First byte is index 0.
 				buffer[index]	|= (1 << count); 
 			}
-			else if (result != STATUS_OK) {
+            else if (result != RC_STATUS_OK) {
 				return result;
 			}
-			else { // STATUS_OK
+            else { // RC_STATUS_OK
 				if (currentLevelKnownBits >= 32) { // This was a SELECT.
 					selectDone = true; // No more anticollision 
 					// We continue below outside the while.
@@ -721,15 +717,15 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 		
 		// Check response SAK (Select Acknowledge)
 		if (responseLength != 3 || txLastBits != 0) {		// SAK must be exactly 24 bits (1 byte + CRC_A).
-			return STATUS_ERROR;
+            return RC_STATUS_ERROR;
 		}
 		// Verify CRC_A - do our own calculation and store the control in buffer[2..3] - those bytes are not needed anymore.
 		result = PCD_CalculateCRC(responseBuffer, 1, &buffer[2]);
-		if (result != STATUS_OK) {
+        if (result != RC_STATUS_OK) {
 			return result;
 		}
 		if ((buffer[2] != responseBuffer[1]) || (buffer[3] != responseBuffer[2])) {
-			return STATUS_CRC_WRONG;
+            return RC_STATUS_CRC_WRONG;
 		}
 		if (responseBuffer[0] & 0x04) { // Cascade bit set - UID not complete yes
 			cascadeLevel++;
@@ -743,13 +739,13 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 	// Set correct uid->size
 	uid->size = 3 * cascadeLevel + 1;
 
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End PICC_Select()
 
 /**
  * Instructs a PICC in state ACTIVE(*) to go to state HALT.
  *
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */ 
 byte MFRC522::PICC_HaltA() {
 
@@ -761,7 +757,7 @@ byte MFRC522::PICC_HaltA() {
 	buffer[1] = 0;
 	// Calculate CRC_A
 	result = PCD_CalculateCRC(buffer, 2, &buffer[2]);
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
 
@@ -769,13 +765,13 @@ byte MFRC522::PICC_HaltA() {
 	// The standard says:
 	//		If the PICC responds with any modulation during a period of 1 ms after the end of the frame containing the
 	//		HLTA command, this response shall be interpreted as 'not acknowledge'.
-	// We interpret that this way: Only STATUS_TIMEOUT is an success.
+    // We interpret that this way: Only RC_STATUS_TIMEOUT is an success.
 	result = PCD_TransceiveData(buffer, sizeof(buffer), NULL, 0);
-	if (result == STATUS_TIMEOUT) {
-		return STATUS_OK;
+    if (result == RC_STATUS_TIMEOUT) {
+        return RC_STATUS_OK;
 	}
-	if (result == STATUS_OK) { // That is ironically NOT ok in this case ;-)
-		return STATUS_ERROR;
+    if (result == RC_STATUS_OK) { // That is ironically NOT ok in this case ;-)
+        return RC_STATUS_ERROR;
 	}
 	return result;
 } // End PICC_HaltA()
@@ -795,7 +791,7 @@ byte MFRC522::PICC_HaltA() {
  * 
  * All keys are set to FFFFFFFFFFFFh at chip delivery.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise. Probably STATUS_TIMEOUT if you supply the wrong key.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise. Probably RC_STATUS_TIMEOUT if you supply the wrong key.
  */
 byte MFRC522::PCD_Authenticate(byte command,		///< PICC_CMD_MF_AUTH_KEY_A or PICC_CMD_MF_AUTH_KEY_B
 								byte blockAddr, 	///< The block number. See numbering in the comments in the .h file.
@@ -840,19 +836,19 @@ void MFRC522::PCD_StopCrypto1() {
  * A roll-back is implemented: If blockAddr is 0Eh, then the contents of pages 0Eh, 0Fh, 00h and 01h are returned.
  * 
  * The buffer must be at least 18 bytes because a CRC_A is also returned.
- * Checks the CRC_A before returning STATUS_OK.
+ * Checks the CRC_A before returning RC_STATUS_OK.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Read(	byte blockAddr, 	///< MIFARE Classic: The block (0-0xff) number. MIFARE Ultralight: The first page to return data from.
 							byte *buffer,		///< The buffer to store the data in
-							byte *bufferSize	///< Buffer size, at least 18 bytes. Also number of bytes returned if STATUS_OK.
+                            byte *bufferSize	///< Buffer size, at least 18 bytes. Also number of bytes returned if RC_STATUS_OK.
 						) {
 	byte result;
 	
 	// Sanity check
 	if (buffer == NULL || *bufferSize < 18) {
-		return STATUS_NO_ROOM;
+        return RC_STATUS_NO_ROOM;
 	}
 
 	// Build command buffer
@@ -860,7 +856,7 @@ byte MFRC522::MIFARE_Read(	byte blockAddr, 	///< MIFARE Classic: The block (0-0x
 	buffer[1] = blockAddr;
 	// Calculate CRC_A
 	result = PCD_CalculateCRC(buffer, 2, &buffer[2]);
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
 	
@@ -877,7 +873,7 @@ byte MFRC522::MIFARE_Read(	byte blockAddr, 	///< MIFARE Classic: The block (0-0x
  * Even though 16 bytes are transferred to the Ultralight PICC, only the least significant 4 bytes (bytes 0 to 3)
  * are written to the specified address. It is recommended to set the remaining bytes 04h to 0Fh to all logic 0.
  * * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Write(	byte blockAddr, ///< MIFARE Classic: The block (0-0xff) number. MIFARE Ultralight: The page (2-15) to write to.
 							byte *buffer,	///< The 16 bytes to write to the PICC
@@ -890,7 +886,7 @@ byte MFRC522::MIFARE_Write(	byte blockAddr, ///< MIFARE Classic: The block (0-0x
 	// Sanity check
 	if (buffer == NULL || bufferSize < 16) {
         qDebug() << "pas 2";
-		return STATUS_INVALID;
+        return RC_STATUS_INVALID;
 	}
 
 	// Mifare Classic protocol requires two communications to perform a write.
@@ -902,7 +898,7 @@ byte MFRC522::MIFARE_Write(	byte blockAddr, ///< MIFARE Classic: The block (0-0x
     qDebug() << "pas 4";
 	result = PCD_MIFARE_Transceive(cmdBuffer, 2); // Adds CRC_A and checks that the response is MF_ACK.
     qDebug() << "pas 5";
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
         qDebug() << "pas 6";
 		return result;
 	}
@@ -910,18 +906,18 @@ byte MFRC522::MIFARE_Write(	byte blockAddr, ///< MIFARE Classic: The block (0-0x
 	// Step 2: Transfer the data
 	result = PCD_MIFARE_Transceive(	buffer, bufferSize); // Adds CRC_A and checks that the response is MF_ACK.
     qDebug() << "pas 7";
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
         qDebug() << "pas 8";
 		return result;
 	}
 
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End MIFARE_Write()
 
 /**
  * Writes a 4 byte page to the active MIFARE Ultralight PICC.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Ultralight_Write(	byte page, 		///< The page (2-15) to write to.
 										byte *buffer,	///< The 4 bytes to write to the PICC
@@ -931,7 +927,7 @@ byte MFRC522::MIFARE_Ultralight_Write(	byte page, 		///< The page (2-15) to writ
 
 	// Sanity check
 	if (buffer == NULL || bufferSize < 4) {
-		return STATUS_INVALID;
+        return RC_STATUS_INVALID;
 	}
 
 	// Build commmand buffer
@@ -942,10 +938,10 @@ byte MFRC522::MIFARE_Ultralight_Write(	byte page, 		///< The page (2-15) to writ
 	
 	// Perform the write
 	result = PCD_MIFARE_Transceive(cmdBuffer, 6); // Adds CRC_A and checks that the response is MF_ACK.
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End MIFARE_Ultralight_Write()
 
 /**
@@ -954,7 +950,7 @@ byte MFRC522::MIFARE_Ultralight_Write(	byte page, 		///< The page (2-15) to writ
  * Only for blocks in "value block" mode, ie with access bits [C1 C2 C3] = [110] or [001].
  * Use MIFARE_Transfer() to store the result in a block.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Decrement(	byte blockAddr, ///< The block (0-0xff) number.
 								long delta		///< This number is subtracted from the value of block blockAddr.
@@ -968,7 +964,7 @@ byte MFRC522::MIFARE_Decrement(	byte blockAddr, ///< The block (0-0xff) number.
  * Only for blocks in "value block" mode, ie with access bits [C1 C2 C3] = [110] or [001].
  * Use MIFARE_Transfer() to store the result in a block.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Increment(	byte blockAddr, ///< The block (0-0xff) number.
 								long delta		///< This number is added to the value of block blockAddr.
@@ -982,7 +978,7 @@ byte MFRC522::MIFARE_Increment(	byte blockAddr, ///< The block (0-0xff) number.
  * Only for blocks in "value block" mode, ie with access bits [C1 C2 C3] = [110] or [001].
  * Use MIFARE_Transfer() to store the result in a block.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Restore(	byte blockAddr ///< The block (0-0xff) number.
 							) {
@@ -994,7 +990,7 @@ byte MFRC522::MIFARE_Restore(	byte blockAddr ///< The block (0-0xff) number.
 /**
  * Helper function for the two-step MIFARE Classic protocol operations Decrement, Increment and Restore.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_TwoStepHelper(	byte command,	///< The command to use
 									byte blockAddr,	///< The block (0-0xff) number.
@@ -1008,17 +1004,17 @@ byte MFRC522::MIFARE_TwoStepHelper(	byte command,	///< The command to use
 	cmdBuffer[0] = command;
 	cmdBuffer[1] = blockAddr;
 	result = PCD_MIFARE_Transceive(	cmdBuffer, 2); // Adds CRC_A and checks that the response is MF_ACK.
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
 
 	// Step 2: Transfer the data
 	result = PCD_MIFARE_Transceive(	(byte *)&data, 4, true); // Adds CRC_A and accept timeout as success.
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
 
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End MIFARE_TwoStepHelper()
 
 /**
@@ -1026,7 +1022,7 @@ byte MFRC522::MIFARE_TwoStepHelper(	byte command,	///< The command to use
  * For MIFARE Classic only. The sector containing the block must be authenticated before calling this function.
  * Only for blocks in "value block" mode, ie with access bits [C1 C2 C3] = [110] or [001].
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_Transfer(	byte blockAddr ///< The block (0-0xff) number.
 							) {
@@ -1037,10 +1033,10 @@ byte MFRC522::MIFARE_Transfer(	byte blockAddr ///< The block (0-0xff) number.
 	cmdBuffer[0] = PICC_CMD_MF_TRANSFER;
 	cmdBuffer[1] = blockAddr;
 	result = PCD_MIFARE_Transceive(	cmdBuffer, 2); // Adds CRC_A and checks that the response is MF_ACK.
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End MIFARE_Transfer()
 
 /**
@@ -1052,7 +1048,7 @@ byte MFRC522::MIFARE_Transfer(	byte blockAddr ///< The block (0-0xff) number.
  * 
  * @param[in]   blockAddr   The block (0x00-0xff) number.
  * @param[out]  value       Current value of the Value Block.
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
   */
 byte MFRC522::MIFARE_GetValue(byte blockAddr, long *value) {
 
@@ -1062,7 +1058,7 @@ byte MFRC522::MIFARE_GetValue(byte blockAddr, long *value) {
 
     // Read the block
     status = MIFARE_Read(blockAddr, buffer, &size);
-    if (status == STATUS_OK) {
+    if (status == RC_STATUS_OK) {
       // Extract the value
       *value = (long(buffer[3])<<24) | (long(buffer[2])<<16) | (long(buffer[1])<<8) | long(buffer[0]);
     }
@@ -1078,7 +1074,7 @@ byte MFRC522::MIFARE_GetValue(byte blockAddr, long *value) {
  * 
  * @param[in]   blockAddr   The block (0x00-0xff) number.
  * @param[in]   value       New value of the Value Block.
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::MIFARE_SetValue(byte blockAddr, long value) {
 
@@ -1110,7 +1106,7 @@ byte MFRC522::MIFARE_SetValue(byte blockAddr, long value) {
  * Wrapper for MIFARE protocol communication.
  * Adds CRC_A, executes the Transceive command and checks that the response is MF_ACK or a timeout.
  * 
- * @return STATUS_OK on success, STATUS_??? otherwise.
+ * @return RC_STATUS_OK on success, STATUS_??? otherwise.
  */
 byte MFRC522::PCD_MIFARE_Transceive(	byte *sendData,		///< Pointer to the data to transfer to the FIFO. Do NOT include the CRC_A.
 										byte sendLen,		///< Number of bytes in sendData.
@@ -1122,13 +1118,13 @@ byte MFRC522::PCD_MIFARE_Transceive(	byte *sendData,		///< Pointer to the data t
 
 	// Sanity check
 	if (sendData == NULL || sendLen > 16) {
-		return STATUS_INVALID;
+        return RC_STATUS_INVALID;
 	}
 	
 	// Copy sendData[] to cmdBuffer[] and add CRC_A
 	memcpy(cmdBuffer, sendData, sendLen);
 	result = PCD_CalculateCRC(cmdBuffer, sendLen, &cmdBuffer[sendLen]);
-	if (result != STATUS_OK) { 
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
 	sendLen += 2;
@@ -1138,20 +1134,20 @@ byte MFRC522::PCD_MIFARE_Transceive(	byte *sendData,		///< Pointer to the data t
 	byte cmdBufferSize = sizeof(cmdBuffer);
 	byte validBits = 0;
 	result = PCD_CommunicateWithPICC(PCD_Transceive, waitIRq, cmdBuffer, sendLen, cmdBuffer, &cmdBufferSize, &validBits);
-	if (acceptTimeout && result == STATUS_TIMEOUT) {
-		return STATUS_OK;
+    if (acceptTimeout && result == RC_STATUS_TIMEOUT) {
+        return RC_STATUS_OK;
 	}
-	if (result != STATUS_OK) {
+    if (result != RC_STATUS_OK) {
 		return result;
 	}
 	// The PICC must reply with a 4 bit ACK
 	if (cmdBufferSize != 1 || validBits != 4) {
-		return STATUS_ERROR;
+        return RC_STATUS_ERROR;
 	}
 	if (cmdBuffer[0] != MF_ACK) {
-		return STATUS_MIFARE_NACK;
+        return RC_STATUS_MIFARE_NACK;
 	}
-	return STATUS_OK;
+    return RC_STATUS_OK;
 } // End PCD_MIFARE_Transceive()
 
 /**
@@ -1161,15 +1157,15 @@ byte MFRC522::PCD_MIFARE_Transceive(	byte *sendData,		///< Pointer to the data t
 const QString MFRC522::GetStatusCodeName(byte code	///< One of the StatusCode enums.
 										) {
 	switch (code) {
-        case STATUS_OK:				return ("Success.");										break;
-        case STATUS_ERROR:			return ("Error in communication.");						break;
-        case STATUS_COLLISION:		return ("Collission detected.");							break;
-        case STATUS_TIMEOUT:		return ("Timeout in communication.");						break;
-        case STATUS_NO_ROOM:		return ("A buffer is not big enough.");					break;
-        case STATUS_INTERNAL_ERROR:	return ("Internal error in the code. Should not happen.");	break;
-        case STATUS_INVALID:		return ("Invalid argument.");								break;
-        case STATUS_CRC_WRONG:		return ("The CRC_A does not match.");						break;
-        case STATUS_MIFARE_NACK:	return ("A MIFARE PICC responded with NAK.");				break;
+        case RC_STATUS_OK:				return ("Success.");										break;
+        case RC_STATUS_ERROR:			return ("Error in communication.");						break;
+        case RC_STATUS_COLLISION:		return ("Collission detected.");							break;
+        case RC_STATUS_TIMEOUT:		return ("Timeout in communication.");						break;
+        case RC_STATUS_NO_ROOM:		return ("A buffer is not big enough.");					break;
+        case RC_STATUS_INTERNAL_ERROR:	return ("Internal error in the code. Should not happen.");	break;
+        case RC_STATUS_INVALID:		return ("Invalid argument.");								break;
+        case RC_STATUS_CRC_WRONG:		return ("The CRC_A does not match.");						break;
+        case RC_STATUS_MIFARE_NACK:	return ("A MIFARE PICC responded with NAK.");				break;
         default:					return ("Unknown error");									break;
 	}
 } // End GetStatusCodeName()
@@ -1391,7 +1387,7 @@ void MFRC522::PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to U
 		// Establish encrypted communications before reading the first block
 		if (isSectorTrailer) {
 			status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, firstBlock, key, uid);
-			if (status != STATUS_OK) {
+            if (status != RC_STATUS_OK) {
                 printf("PCD_Authenticate() failed: ");
 //                printf("%s\n", GetStatusCodeName(status).c_str());
 				return;
@@ -1400,7 +1396,7 @@ void MFRC522::PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to U
 		// Read block
 		byteCount = sizeof(buffer);
 		status = MIFARE_Read(blockAddr, buffer, &byteCount);
-		if (status != STATUS_OK) {
+        if (status != RC_STATUS_OK) {
             printf("MIFARE_Read() failed: ");
 //            printf("%s\n", GetStatusCodeName(status).c_str());
 			continue;
@@ -1478,7 +1474,7 @@ void MFRC522::PICC_DumpMifareUltralightToSerial() {
 		// Read pages
 		byteCount = sizeof(buffer);
 		status = MIFARE_Read(page, buffer, &byteCount);
-		if (status != STATUS_OK) {
+        if (status != RC_STATUS_OK) {
             printf("MIFARE_Read() failed: ");
 //            printf("%s\n",GetStatusCodeName(status).c_str());
 			break;
@@ -1548,7 +1544,7 @@ bool MFRC522::MIFARE_OpenUidBackdoor(bool logErrors) {
     byte response[32]; // Card's response is written here
     byte received;
     byte status = PCD_TransceiveData(&cmd, (byte)1, response, &received, &validBits, (byte)0, false); // 40
-    if( status != STATUS_OK ) {
+    if( status != RC_STATUS_OK ) {
         if( logErrors ) {
             printf("Card did not respond to 0x40 after HALT command. Are you sure it is a UID changeable one?\n");
             printf("Error name: ");
@@ -1570,7 +1566,7 @@ bool MFRC522::MIFARE_OpenUidBackdoor(bool logErrors) {
     cmd = 0x43;
     validBits = 8;
     status = PCD_TransceiveData(&cmd, (byte)1, response, &received, &validBits, (byte)0, false); // 43
-    if( status != STATUS_OK ) {
+    if( status != RC_STATUS_OK ) {
         if( logErrors ) {
             printf("Error in communication at command 0x43, after successfully executing 0x40\n");
             printf("Error name: ");
@@ -1614,9 +1610,9 @@ bool MFRC522::MIFARE_SetUid(byte* newUid, byte uidSize, bool logErrors) {
     // Authenticate for reading
     MIFARE_Key key = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     byte status = PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, (byte)1, &key, &uid);
-    if ( status != STATUS_OK ) {
+    if ( status != RC_STATUS_OK ) {
         
-        if ( status == STATUS_TIMEOUT ) {
+        if ( status == RC_STATUS_TIMEOUT ) {
             // We get a read timeout if no card is selected yet, so let's select one
             
             // Wake the card up again if sleeping
@@ -1630,7 +1626,7 @@ bool MFRC522::MIFARE_SetUid(byte* newUid, byte uidSize, bool logErrors) {
             }
             
             status = PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, (byte)1, &key, &uid);
-            if ( status != STATUS_OK ) {
+            if ( status != RC_STATUS_OK ) {
                 // We tried, time to give up
                 if ( logErrors ) {
                     printf("Failed to authenticate to card for reading, could not set UID: \n");
@@ -1652,7 +1648,7 @@ bool MFRC522::MIFARE_SetUid(byte* newUid, byte uidSize, bool logErrors) {
     byte block0_buffer[18];
     byte byteCount = sizeof(block0_buffer);
     status = MIFARE_Read((byte)0, block0_buffer, &byteCount);
-    if ( status != STATUS_OK ) {
+    if ( status != RC_STATUS_OK ) {
         if ( logErrors ) {
             printf("MIFARE_Read() failed: ");
 //            printf("%s\n", GetStatusCodeName(status).c_str());
@@ -1684,7 +1680,7 @@ bool MFRC522::MIFARE_SetUid(byte* newUid, byte uidSize, bool logErrors) {
     
     // Write modified block 0 back to card
     status = MIFARE_Write((byte)0, block0_buffer, (byte)16);
-    if (status != STATUS_OK) {
+    if (status != RC_STATUS_OK) {
         if ( logErrors ) {
             printf("MIFARE_Write() failed: ");
 //            printf("%s\n",GetStatusCodeName(status).c_str());
@@ -1711,7 +1707,7 @@ bool MFRC522::MIFARE_UnbrickUidSector(bool logErrors) {
     
     // Write modified block 0 back to card
     byte status = MIFARE_Write((byte)0, block0_buffer, (byte)16);
-    if (status != STATUS_OK) {
+    if (status != RC_STATUS_OK) {
         if ( logErrors ) {
             printf("MIFARE_Write() failed: ");
 //            printf("%s\n",GetStatusCodeName(status).c_str());
@@ -1735,7 +1731,7 @@ bool MFRC522::PICC_IsNewCardPresent() {
 	byte bufferATQA[2];
 	byte bufferSize = sizeof(bufferATQA);
 	byte result = PICC_RequestA(bufferATQA, &bufferSize);
-	return (result == STATUS_OK || result == STATUS_COLLISION);
+    return (result == RC_STATUS_OK || result == RC_STATUS_COLLISION);
 } // End PICC_IsNewCardPresent()
 
 /**
@@ -1748,6 +1744,6 @@ bool MFRC522::PICC_IsNewCardPresent() {
  */
 bool MFRC522::PICC_ReadCardSerial() {
 	byte result = PICC_Select(&uid);
-	return (result == STATUS_OK);
+    return (result == RC_STATUS_OK);
 } // End PICC_ReadCardSerial()
  
