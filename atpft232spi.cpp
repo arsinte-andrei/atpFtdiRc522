@@ -20,9 +20,11 @@ atpFt232Spi::atpFt232Spi(QObject *parent) : QObject(parent) {
     uint8 i = 0;
     uint8 latency = 255;
 
+//    status = FT_SetLatencyTimer(ftHandle, 1);
+
     channelConf.ClockRate = SPI_SPEED;
     channelConf.LatencyTimer = latency;
-    channelConf.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;// | SPI_CONFIG_OPTION_CS_ACTIVELOW;
+    channelConf.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3 | SPI_CONFIG_OPTION_CS_ACTIVELOW;
     channelConf.Pin = 0x00000000;/*FinalVal-FinalDir-InitVal-InitDir (for dir 0=in, 1=out)*/
 
     /* load library */
@@ -135,6 +137,9 @@ atpFt232Spi::atpFt232Spi(QObject *parent) : QObject(parent) {
 #endif // USE_WRITEREAD
 
     }
+
+//    p_FT_ReadGPIO(ftHandle);
+
 }
 
 atpFt232Spi::~atpFt232Spi() {
@@ -296,4 +301,16 @@ void atpFt232Spi::delay( int millisecondsToWait ) {
     while( QTime::currentTime() < dieTime ) {
         QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
     }
+}
+
+void atpFt232Spi::writeGpioPin(int pinNo, uint8 lowHiState){
+    //pinNo =1 = C0
+    uint8 pins = 0x11111111;
+
+    p_FT_WriteGPIO(ftHandle,pins, lowHiState);
+
+    uint8 value;
+
+     p_FT_ReadGPIO(ftHandle, &value);
+     qDebug() <<value;
 }

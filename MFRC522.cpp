@@ -38,7 +38,7 @@ void MFRC522::setSPIConfig() {
 //TODO    bcm2835_spi_begin();
 //TODO    bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      // The default
 //TODO -   bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);                   // The default
-//TODO    bcm2835_spi_setClockDivider(SPI_SPEED); 			  // The default
+//TODO -   bcm2835_spi_setClockDivider(SPI_SPEED); 			  // The default
 //TODO    bcm2835_spi_chipSelect(BCM2835_SPI_CS0);                      // The default
 //TODO    bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);      // the default
 } // End setSPIConfig()

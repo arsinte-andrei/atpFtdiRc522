@@ -85,6 +85,7 @@ public slots:
     FT_STATUS write_byte(uint8 slaveAddress, uint8 address, uint16 data);
 
     void delay(int millisecondsToWait);
+    void writeGpioPin(int pinNo, uint8 lowHiState);
 signals:
 
 private:
