@@ -7,41 +7,16 @@
 #include <cstdio>
 
 //TODO - #define  DEFAULT_SPI_SPEED 5000L
-//TODO #define  PIN RPI_V2_GPIO_P1_22
+#define  PIN FT_PIN_C07
 /**
  * Constructor.
  * Prepares the output pins
  */
 MFRC522::MFRC522(QObject *parent) : QObject(parent){
     atpFtdi = new atpFt232Spi();
+    atpFtdi->writeGpioPin(PIN, FT_PIN_LOW);
 }
 // End constructor
-
-void MFRC522::postConstruct() {
-
-//TODO    bcm2835_gpio_fsel(PIN, BCM2835_GPIO_FSEL_OUTP);
-//TODO    bcm2835_gpio_write(PIN, LOW);
-
-    // Set SPI bus to work with MFRC522 chip.
-    setSPIConfig();
-
-}
-
-/**
- * Set SPI bus to work with MFRC522 chip.
- * Please call this function if you have changed the SPI config since the MFRC522 constructor was run.
- */
-void MFRC522::setSPIConfig() {
-
-//    uint16_t SPI_SPEED;
-//    SPI_SPEED = (uint16_t)(250000L / DEFAULT_SPI_SPEED);
-//TODO    bcm2835_spi_begin();
-//TODO    bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      // The default
-//TODO -   bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);                   // The default
-//TODO -   bcm2835_spi_setClockDivider(SPI_SPEED); 			  // The default
-//TODO    bcm2835_spi_chipSelect(BCM2835_SPI_CS0);                      // The default
-//TODO    bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);      // the default
-} // End setSPIConfig()
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Basic interface functions for communicating with the MFRC522
