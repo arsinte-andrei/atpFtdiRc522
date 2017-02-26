@@ -2,6 +2,7 @@
 #define ATPFT232SPI_H
 
 #include <QObject>
+#include <QMap>
 
 #include <Windows.h>
 /* Include D2XX header*/
@@ -98,7 +99,7 @@ public slots:
     FT_STATUS write_byte(uint8 slaveAddress, uint8 address, uint16 data);
 
     void delay(int millisecondsToWait);
-    void writeGpioPin(int pinNo, uint8 lowHiState);
+    void writeGpioPin(int pinNo, int lowHiState);
 
     void initDllLyb();
     void initSpiComunication();
@@ -108,6 +109,11 @@ signals:
 private:
     uint32 channels;
     bool libDllLoaded; // hold the status of loading the dll library
+    QMap<int, int> pinStateValue;
+
+private slots:
+    void resetPinstateValue();
+    uint8 editPinStateValu(int pinNo, int value);
 
 };
 

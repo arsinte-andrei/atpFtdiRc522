@@ -9,6 +9,7 @@
 atpFt232Spi::atpFt232Spi(QObject *parent) : QObject(parent) {
 
     libDllLoaded = false;
+    resetPinstateValue();
     initDllLyb();
     initSpiComunication();
 }
@@ -173,11 +174,22 @@ void atpFt232Spi::delay( int millisecondsToWait ) {
     }
 }
 
-void atpFt232Spi::writeGpioPin(int pinNo, uint8 lowHiState){
-
-    p_FT_WriteGPIO(ftHandle,FT_PIN_C08, lowHiState);
-
+void atpFt232Spi::writeGpioPin(int pinNo, int lowHiState){
     uint8 value;
+    p_FT_ReadGPIO(ftHandle, &value);
+    qDebug() <<value;
+
+
+
+    if( (pinNo>7) || (lowHiState>1) ){
+        return;
+    }
+    uint8 allPinsToWrite = 0x07; //primii trei pini
+    uint8 allValuesToWrite = editPinStateValu(pinNo, lowHiState);
+
+    p_FT_WriteGPIO(ftHandle, allPinsToWrite, allValuesToWrite);
+
+
 
      p_FT_ReadGPIO(ftHandle, &value);
      qDebug() <<value;
@@ -306,4 +318,28 @@ void atpFt232Spi::initSpiComunication() {
 
 bool atpFt232Spi::isDllLybLoaded() {
     return libDllLoaded;
+}
+
+void atpFt232Spi::resetPinstateValue() {
+    pinStateValue[1] = 0;
+    pinStateValue[2] = 0;
+    pinStateValue[3] = 0;
+    pinStateValue[4] = 0;
+    pinStateValue[5] = 0;
+    pinStateValue[6] = 0;
+    pinStateValue[7] = 0;
+    pinStateValue[8] = 0;
+}
+
+uint8 atpFt232Spi::editPinStateValu(int pinNo, int value) {
+    bool valoare = false;
+   pinStateValue[pinNo] = value;
+   QString pinValStr ="";
+   for (int var = 1; var < 9; var++) {
+       qDebug() <<"VAR: " <<var;
+       pinValStr.append(QString::number(pinStateValue[var]));
+       qDebug() <<"STR: " <<pinValStr;
+   }
+   qDebug() <<"STR: " <<pinValStr.toUInt(&valoare,16);
+   return 0x00;
 }
