@@ -28,6 +28,19 @@ public:
     #define DATA_OFFSET				4
     #define USE_WRITEREAD			0
 
+    /*FT232H pins*/
+    const uint8 FT_PIN_C01 = 0x01; // PIN C0 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C02 = 0x02; // PIN C1 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C03 = 0x04; // PIN C2 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C04 = 0x08; // PIN C3 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C05 = 0x10; // PIN C4 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C06 = 0x20; // PIN C5 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C07 = 0x40; // PIN C6 of the phisical FT232H board from adafruit
+    const uint8 FT_PIN_C08 = 0x80; // PIN C7 of the phisical FT232H board from adafruit
+
+    /*FT232H pins value*/
+    const uint8 FT_PIN_LOW = 0x00;
+    const uint8 FT_PIN_HI = 0x01;
 
     /******************************************************************************/
     /*                                  	SPI         						  */
@@ -86,10 +99,15 @@ public slots:
 
     void delay(int millisecondsToWait);
     void writeGpioPin(int pinNo, uint8 lowHiState);
+
+    void initDllLyb();
+    void initSpiComunication();
+    bool isDllLybLoaded();
 signals:
 
 private:
     uint32 channels;
+    bool libDllLoaded; // hold the status of loading the dll library
 
 };
 

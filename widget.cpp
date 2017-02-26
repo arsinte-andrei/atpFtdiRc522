@@ -3,6 +3,9 @@
 #include <QLibrary>
 #include <qDebug>
 
+#define RC_RESET_PIN = 0x
+
+
 Widget::Widget(QWidget *parent) : QWidget(parent), ui(new Ui::Widget) {
     ui->setupUi(this);
 
@@ -17,10 +20,14 @@ Widget::~Widget() {
 void Widget::on_pushButton_clicked() {
     if(ui->pushButton->text()=="ON"){
         ui->pushButton->setText("OFF");
-        atpftdi->writeGpioPin(0,0x11111111);
+        atpftdi->writeGpioPin(0,0xFF);
     } else {
         ui->pushButton->setText("ON");
-        atpftdi->writeGpioPin(0,0x00000000);
+        atpftdi->writeGpioPin(0,0xFF);
     }
 
+}
+
+void Widget::on_pushButton_2_clicked(){
+    atpftdi->initSpiComunication();
 }
