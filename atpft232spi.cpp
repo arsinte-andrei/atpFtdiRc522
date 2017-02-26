@@ -179,17 +179,16 @@ void atpFt232Spi::writeGpioPin(int pinNo, int lowHiState){
     p_FT_ReadGPIO(ftHandle, &value);
     qDebug() <<value;
 
+    qDebug() <<"PIN: " <<pinNo <<"LOW - HI: " <<lowHiState;
 
 
     if( (pinNo>7) || (lowHiState>1) ){
         return;
     }
-    uint8 allPinsToWrite = 0x07; //primii trei pini
-    uint8 allValuesToWrite = editPinStateValu(pinNo, lowHiState);
-
+    uint8 allPinsToWrite = 0xFF; //primii trei pini
+    uint8 allValuesToWrite = editPinStateValue(pinNo, lowHiState);
+    qDebug() <<"uint8 returned:" << allValuesToWrite;
     p_FT_WriteGPIO(ftHandle, allPinsToWrite, allValuesToWrite);
-
-
 
      p_FT_ReadGPIO(ftHandle, &value);
      qDebug() <<value;
@@ -331,7 +330,7 @@ void atpFt232Spi::resetPinstateValue() {
     pinStateValue[8] = 0;
 }
 
-uint8 atpFt232Spi::editPinStateValu(int pinNo, int value) {
+uint8 atpFt232Spi::editPinStateValue(int pinNo, int value) {
     bool valoare = false;
    pinStateValue[pinNo] = value;
    QString pinValStr ="";
@@ -340,6 +339,9 @@ uint8 atpFt232Spi::editPinStateValu(int pinNo, int value) {
        pinValStr.append(QString::number(pinStateValue[var]));
        qDebug() <<"STR: " <<pinValStr;
    }
-   qDebug() <<"STR: " <<pinValStr.toUInt(&valoare,16);
-   return 0x00;
+   qDebug() <<"STR: " <<pinValStr;
+   int myVal = pinValStr.toInt(&valoare, 2);
+   qDebug() <<"int: " <<myVal;
+
+   return (uint8)myVal;
 }

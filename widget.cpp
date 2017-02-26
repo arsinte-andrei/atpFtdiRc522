@@ -21,10 +21,10 @@ void Widget::on_pushButton_2_clicked(){
 void Widget::on_pushButton_clicked() {
     if(ui->pushButton->text()=="ON"){
         ui->pushButton->setText("OFF");
-        atpftdi->writeGpioPin(5, atpftdi->FT_PIN_HI);
+        atpftdi->writeGpioPin(FT_PIN_C01, FT_PIN_HI);
     } else {
         ui->pushButton->setText("ON");
-        atpftdi->writeGpioPin(5, atpftdi->FT_PIN_LOW);
+        atpftdi->writeGpioPin(FT_PIN_C01, FT_PIN_LOW);
     }
 
 }
@@ -32,19 +32,10 @@ void Widget::on_pushButton_clicked() {
 void Widget::on_pushButton_3_clicked() {
     if(ui->pushButton_3->text()=="ON"){
         ui->pushButton_3->setText("OFF");
-        atpftdi->writeGpioPin(3, atpftdi->FT_PIN_HI);
+        atpftdi->writeGpioPin(FT_PIN_C02, FT_PIN_HI);
     } else {
         ui->pushButton_3->setText("ON");
-        atpftdi->writeGpioPin(3, atpftdi->FT_PIN_LOW);
+        atpftdi->writeGpioPin(FT_PIN_C02, FT_PIN_LOW);
     }
 }
 
-void Widget::on_pushButton_4_clicked() {
-    if(ui->pushButton_4->text()=="ON"){
-        ui->pushButton_4->setText("OFF");
-        atpftdi->writeGpioPin(1, atpftdi->FT_PIN_HI);
-    } else {
-        ui->pushButton_4->setText("ON");
-        atpftdi->writeGpioPin(1, atpftdi->FT_PIN_LOW);
-    }
-}
