@@ -136,7 +136,7 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
 	PCD_WriteRegister(FIFODataReg, length, data);	// Write data to the FIFO
 	PCD_WriteRegister(CommandReg, PCD_CalcCRC);		// Start the calculation
 	
-	// Wait for the CRC calculation to complete. Each iteration of the while-loop takes 17.73�s.
+    // Wait for the CRC calculation to complete. Each iteration of the while-loop takes 17.73μs.
 	word i = 5000;
 	byte n;
 	while (1) {
@@ -167,12 +167,11 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
 void MFRC522::PCD_Init() {
     //TODO acceseaza pin si da power
 //    if(bcm2835_gpio_lev(PIN) == LOW) {   //The MFRC522 chip is in power down mode.
-//        bcm2835_gpio_write(PIN, HIGH);   // Exit power down mode. This triggers a hard reset.
+        atpFtdi->writeGpioPin(PIN, FT_PIN_HI); // Exit power down mode. This triggers a hard reset.
         atpFtdi->delay(50);                       // Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
-//	}
-//	else { // Perform a soft reset
+//    } else { // Perform a soft reset
 		PCD_Reset();
-//	}
+//    }
 	
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// f_timer = 13.56 MHz / (2*TPreScaler+1) where TPreScaler = [TPrescaler_Hi:TPrescaler_Lo].
@@ -250,6 +249,7 @@ void MFRC522::PCD_SetAntennaGain(byte mask) {
  * @return Whether or not the test passed.
  */
 bool MFRC522::PCD_PerformSelfTest() {
+    //TODO a test is a bit different compared to the website originall git version
     // This follows directly the steps outlined in 16.1.1
 
     // 1. Perform a soft reset.
@@ -296,12 +296,19 @@ bool MFRC522::PCD_PerformSelfTest() {
     // Pick the appropriate reference values
     const byte *reference;
     switch (version) {
-        case 0x91: // Version 1.0
+
+        case 0x88:	// Fudan Semiconductor FM17522 clone
+            reference = FM17522_firmware_reference;
+            break;
+        case 0x90:	// Version 0.0
+            reference = MFRC522_firmware_referenceV0_0;
+            break;
+        case 0x91:	// Version 1.0
             reference = MFRC522_firmware_referenceV1_0;
             break;
-        case 0x92: // Version 2.0
+        case 0x92:	// Version 2.0
             reference = MFRC522_firmware_referenceV2_0;
-            break;
+        break;
         default:   // Unknown version
             return false;
     }
@@ -856,11 +863,8 @@ byte MFRC522::MIFARE_Write(	byte blockAddr, ///< MIFARE Classic: The block (0-0x
 						) {
 	byte result;
 
-    qDebug() << "pas 1";
-
 	// Sanity check
 	if (buffer == NULL || bufferSize < 16) {
-        qDebug() << "pas 2";
         return RC_STATUS_INVALID;
 	}
 
@@ -868,21 +872,15 @@ byte MFRC522::MIFARE_Write(	byte blockAddr, ///< MIFARE Classic: The block (0-0x
 	// Step 1: Tell the PICC we want to write to block blockAddr.
 	byte cmdBuffer[2];
 	cmdBuffer[0] = PICC_CMD_MF_WRITE;
-    qDebug() << "pas 3";
 	cmdBuffer[1] = blockAddr;
-    qDebug() << "pas 4";
 	result = PCD_MIFARE_Transceive(cmdBuffer, 2); // Adds CRC_A and checks that the response is MF_ACK.
-    qDebug() << "pas 5";
     if (result != RC_STATUS_OK) {
-        qDebug() << "pas 6";
 		return result;
 	}
 
 	// Step 2: Transfer the data
 	result = PCD_MIFARE_Transceive(	buffer, bufferSize); // Adds CRC_A and checks that the response is MF_ACK.
-    qDebug() << "pas 7";
     if (result != RC_STATUS_OK) {
-        qDebug() << "pas 8";
 		return result;
 	}
 
@@ -1073,6 +1071,48 @@ byte MFRC522::MIFARE_SetValue(byte blockAddr, long value) {
     return MIFARE_Write(blockAddr, buffer, 16);
 } // End MIFARE_SetValue()
 
+/**
+ * Authenticate with a NTAG216.
+ *
+ * Only for NTAG216. First implemented by Gargantuanman.
+ *
+ * @param[in]   passWord   password.
+ * @param[in]   pACK       result success???.
+ * @return STATUS_OK on success, STATUS_??? otherwise.
+ */
+MFRC522::StatusCode MFRC522::PCD_NTAG216_AUTH(byte* passWord, byte pACK[]) //Authenticate with 32bit password
+{
+    byte result;
+    byte				cmdBuffer[18]; // We need room for 16 bytes data and 2 bytes CRC_A.
+
+    cmdBuffer[0] = 0x1B; //Comando de autentificacion
+
+    for (byte i = 0; i<4; i++)
+        cmdBuffer[i+1] = passWord[i];
+
+    result = PCD_CalculateCRC(cmdBuffer, 5, &cmdBuffer[5]);
+
+    if (result!=RC_STATUS_OK) {
+        return result;
+    }
+
+    // Transceive the data, store the reply in cmdBuffer[]
+    byte waitIRq		= 0x30;	// RxIRq and IdleIRq
+    byte cmdBufferSize	= sizeof(cmdBuffer);
+    byte validBits		= 0;
+    byte rxlength		= 5;
+    result = PCD_CommunicateWithPICC(PCD_Transceive, waitIRq, cmdBuffer, 7, cmdBuffer, &rxlength, &validBits);
+
+    pACK[0] = cmdBuffer[0];
+    pACK[1] = cmdBuffer[1];
+
+    if (result!=RC_STATUS_OK) {
+        return result;
+    }
+
+    return RC_STATUS_OK;
+} // End PCD_NTAG216_AUTH()
+
 /////////////////////////////////////////////////////////////////////////////////////
 // Support functions
 /////////////////////////////////////////////////////////////////////////////////////
@@ -1126,22 +1166,22 @@ byte MFRC522::PCD_MIFARE_Transceive(	byte *sendData,		///< Pointer to the data t
 } // End PCD_MIFARE_Transceive()
 
 /**
- * Returns a __FlashStringHelper pointer to a status code name.
+ * Returns a QString pointer to a status code name.
  * 
  */
 const QString MFRC522::GetStatusCodeName(byte code	///< One of the StatusCode enums.
 										) {
 	switch (code) {
         case RC_STATUS_OK:				return ("Success.");										break;
-        case RC_STATUS_ERROR:			return ("Error in communication.");						break;
+        case RC_STATUS_ERROR:			return ("Error in communication.");                         break;
         case RC_STATUS_COLLISION:		return ("Collission detected.");							break;
-        case RC_STATUS_TIMEOUT:		return ("Timeout in communication.");						break;
-        case RC_STATUS_NO_ROOM:		return ("A buffer is not big enough.");					break;
+        case RC_STATUS_TIMEOUT:         return ("Timeout in communication.");						break;
+        case RC_STATUS_NO_ROOM:         return ("A buffer is not big enough.");                     break;
         case RC_STATUS_INTERNAL_ERROR:	return ("Internal error in the code. Should not happen.");	break;
-        case RC_STATUS_INVALID:		return ("Invalid argument.");								break;
+        case RC_STATUS_INVALID:         return ("Invalid argument.");								break;
         case RC_STATUS_CRC_WRONG:		return ("The CRC_A does not match.");						break;
-        case RC_STATUS_MIFARE_NACK:	return ("A MIFARE PICC responded with NAK.");				break;
-        default:					return ("Unknown error");									break;
+        case RC_STATUS_MIFARE_NACK:     return ("A MIFARE PICC responded with NAK.");				break;
+        default:                        return ("Unknown error");									break;
 	}
 } // End GetStatusCodeName()
 
@@ -1152,34 +1192,29 @@ const QString MFRC522::GetStatusCodeName(byte code	///< One of the StatusCode en
  */
 byte MFRC522::PICC_GetType(byte sak		///< The SAK byte returned from PICC_Select().
 							) {
-	if (sak & 0x04) { // UID not complete
-		return PICC_TYPE_NOT_COMPLETE;
+    // http://www.nxp.com/documents/application_note/AN10833.pdf
+        // 3.2 Coding of Select Acknowledge (SAK)
+        // ignore 8-bit (iso14443 starts with LSBit = bit 1)
+    // fixes wrong type for manufacturer Infineon (http://nfc-tools.org/index.php?title=ISO14443A)
+
+    switch (sak) {
+        case 0x04:	return PICC_TYPE_NOT_COMPLETE;	// UID not complete
+        case 0x09:	return PICC_TYPE_MIFARE_MINI;
+        case 0x08:	return PICC_TYPE_MIFARE_1K;
+        case 0x18:	return PICC_TYPE_MIFARE_4K;
+        case 0x00:	return PICC_TYPE_MIFARE_UL;
+        case 0x10:
+        case 0x11:	return PICC_TYPE_MIFARE_PLUS;
+        case 0x01:	return PICC_TYPE_TNP3XXX;
+        case 0x20:	return PICC_TYPE_ISO_14443_4;
+        case 0x40:	return PICC_TYPE_ISO_18092;
+        default: return PICC_TYPE_UNKNOWN;
 	}
-	
-	switch (sak) {
-		case 0x09:	return PICC_TYPE_MIFARE_MINI;	break;
-		case 0x08:	return PICC_TYPE_MIFARE_1K;		break;
-		case 0x18:	return PICC_TYPE_MIFARE_4K;		break;
-		case 0x00:	return PICC_TYPE_MIFARE_UL;		break;
-		case 0x10:
-		case 0x11:	return PICC_TYPE_MIFARE_PLUS;	break;
-		case 0x01:	return PICC_TYPE_TNP3XXX;		break;
-		default:	break;
-	}
-	
-	if (sak & 0x20) {
-		return PICC_TYPE_ISO_14443_4;
-	}
-	
-	if (sak & 0x40) {
-		return PICC_TYPE_ISO_18092;
-	}
-	
 	return PICC_TYPE_UNKNOWN;
 } // End PICC_GetType()
 
 /**
- * Returns a __FlashStringHelper pointer to the PICC type name.
+ * Returns a QString pointer to the PICC type name.
  * 
  */
 const QString MFRC522::PICC_GetTypeName(byte piccType	///< One of the PICC_Type enums.
@@ -1198,6 +1233,29 @@ const QString MFRC522::PICC_GetTypeName(byte piccType	///< One of the PICC_Type 
         default:						return ("Unknown type");							break;
 	}
 } // End PICC_GetTypeName()
+
+/**
+ * Dumps debug info about the connected PCD to Serial.
+ * Shows all known firmware versions
+ */
+void MFRC522::PCD_DumpVersionToSerial() {
+    // Get the MFRC522 firmware version
+    byte v = PCD_ReadRegister(VersionReg);
+    print(F("Firmware Version: 0x"));
+//	print(v, HEX);
+    // Lookup which version
+    switch(v) {
+        case 0x88: println(F(" = (clone)"));  break;
+        case 0x90: println(F(" = v0.0"));     break;
+        case 0x91: println(F(" = v1.0"));     break;
+        case 0x92: println(F(" = v2.0"));     break;
+        default:   println(F(" = (unknown)"));
+    }
+    // When 0x00 or 0xFF is returned, communication probably failed
+    if ((v == 0x00) || (v == 0xFF))
+        println(F("WARNING: Communication failure, is the MFRC522 properly connected?"));
+} // End PCD_DumpVersionToSerial()
+
 
 /**
  * Dumps debug info about the selected PICC to Serial.
@@ -1591,10 +1649,10 @@ bool MFRC522::MIFARE_SetUid(byte* newUid, byte uidSize, bool logErrors) {
             // We get a read timeout if no card is selected yet, so let's select one
             
             // Wake the card up again if sleeping
-//            byte atqa_answer[2];
-//            byte atqa_size = 2;
-//            PICC_WakeupA(atqa_answer, &atqa_size);
-            
+           // byte atqa_answer[2];
+            //byte atqa_size = 2;
+            //PICC_WakeupA(atqa_answer, &atqa_size);
+
             if ( !PICC_IsNewCardPresent() || !PICC_ReadCardSerial() ) {
                 printf("No card was previously selected, and none are available. Failed to set UID.\n");
                 return false;
@@ -1689,6 +1747,7 @@ bool MFRC522::MIFARE_UnbrickUidSector(bool logErrors) {
         }
         return false;
     }
+    return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

@@ -175,11 +175,14 @@ void atpFt232Spi::delay( int millisecondsToWait ) {
 }
 
 void atpFt232Spi::writeGpioPin(int pinNo, int lowHiState){
-    uint8 value;
-    p_FT_ReadGPIO(ftHandle, &value);
-    qDebug() <<value;
+    /*TOBE DELETED*/
+        uint8 value;
+        p_FT_ReadGPIO(ftHandle, &value);
+        qDebug() <<value;
 
-    qDebug() <<"PIN: " <<pinNo <<"LOW - HI: " <<lowHiState;
+        qDebug() <<"PIN: " <<pinNo <<"LOW - HI: " <<lowHiState;
+
+    /*TOBE DELETED*/
 
 
     if( (pinNo>7) || (lowHiState>1) ){
@@ -189,9 +192,10 @@ void atpFt232Spi::writeGpioPin(int pinNo, int lowHiState){
     uint8 allValuesToWrite = editPinStateValue(pinNo, lowHiState);
     qDebug() <<"uint8 returned:" << allValuesToWrite;
     p_FT_WriteGPIO(ftHandle, allPinsToWrite, allValuesToWrite);
-
+ /*TOBE DELETED*/
      p_FT_ReadGPIO(ftHandle, &value);
      qDebug() <<value;
+ /*TOBE DELETED*/
 }
 
 void atpFt232Spi::initDllLyb() { /* load library */
