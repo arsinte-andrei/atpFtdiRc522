@@ -7,6 +7,7 @@ Widget::Widget(QWidget *parent) : QWidget(parent), ui(new Ui::Widget) {
     ui->setupUi(this);
 
     atpftdi = new atpFt232Spi();
+    mfrc522 = new MFRC522(this);
 
 }
 
@@ -39,3 +40,10 @@ void Widget::on_pushButton_3_clicked() {
     }
 }
 
+
+void Widget::on_pushButton_4_clicked() {
+    mfrc522->PCD_Init();
+
+    rc522Thread = new atpRc522Thread(mfrc522, this);
+    rc522Thread->start();
+}

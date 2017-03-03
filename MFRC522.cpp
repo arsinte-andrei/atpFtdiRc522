@@ -78,6 +78,9 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 	byte index = 0;							// Index in values array.
 	count--;								// One read is performed outside of the loop
 //TODO    bcm2835_spi_transfer(address);
+    uint16 data = 0;
+    atpFtdi->read_byte(SPI_SLAVE_0, address, &data);
+    qDebug () <<"AICI: " <<data;
 	while (index < count) {
 		if (index == 0 && rxAlign) {		// Only update bit positions rxAlign..7 in values[0]
 			// Create bit mask for bit positions rxAlign..7
@@ -87,11 +90,16 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 			}
 			// Read value and tell that we want to read the same address again.    
 //TODO            byte value = bcm2835_spi_transfer(address);
+            atpFtdi->read_byte(SPI_SLAVE_0, address, &data);
+            qDebug () <<"AICI1: " <<data;
 			// Apply mask to both current value of values[0] and the new data in value.
 //TODO			values[0] = (values[index] & ~mask) | (value & mask);
+            values[0] = (values[index] & ~mask) | (data & mask);
 		}
 		else { // Normal case           
 //TODO           values[index] = bcm2835_spi_transfer(address);     // Read value and tell that we want to read the same address again.
+            atpFtdi->read_byte(SPI_SLAVE_0, address, &data);
+            qDebug () <<"AICI2: " <<data;
 		}
 		index++;
 	}
@@ -1080,7 +1088,7 @@ byte MFRC522::MIFARE_SetValue(byte blockAddr, long value) {
  * @param[in]   pACK       result success???.
  * @return STATUS_OK on success, STATUS_??? otherwise.
  */
-MFRC522::StatusCode MFRC522::PCD_NTAG216_AUTH(byte* passWord, byte pACK[]) //Authenticate with 32bit password
+byte MFRC522::PCD_NTAG216_AUTH(byte* passWord, byte pACK[]) //Authenticate with 32bit password
 {
     byte result;
     byte				cmdBuffer[18]; // We need room for 16 bytes data and 2 bytes CRC_A.
@@ -1241,19 +1249,19 @@ const QString MFRC522::PICC_GetTypeName(byte piccType	///< One of the PICC_Type 
 void MFRC522::PCD_DumpVersionToSerial() {
     // Get the MFRC522 firmware version
     byte v = PCD_ReadRegister(VersionReg);
-    print(F("Firmware Version: 0x"));
+//    print("Firmware Version: 0x");
 //	print(v, HEX);
     // Lookup which version
     switch(v) {
-        case 0x88: println(F(" = (clone)"));  break;
-        case 0x90: println(F(" = v0.0"));     break;
-        case 0x91: println(F(" = v1.0"));     break;
-        case 0x92: println(F(" = v2.0"));     break;
-        default:   println(F(" = (unknown)"));
+        case 0x88: qDebug() <<" = (clone)";  break;
+        case 0x90: qDebug() <<" = v0.0";     break;
+        case 0x91: qDebug() <<" = v1.0";     break;
+        case 0x92: qDebug() <<" = v2.0";     break;
+        default:   qDebug() <<" = (unknown)";
     }
     // When 0x00 or 0xFF is returned, communication probably failed
     if ((v == 0x00) || (v == 0xFF))
-        println(F("WARNING: Communication failure, is the MFRC522 properly connected?"));
+        qDebug() << "WARNING: Communication failure, is the MFRC522 properly connected?";
 } // End PCD_DumpVersionToSerial()
 
 

@@ -26,13 +26,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
     widget.cpp \
     MFRC522.cpp \
-    atpft232spi.cpp
+    atpft232spi.cpp \
+    atprc522thread.cpp
 
 HEADERS  += widget.h \
     ftd2xx.h \
     libMPSSE_spi.h \
     WinTypes.h \
     MFRC522.h \
-    atpft232spi.h
+    atpft232spi.h \
+    atprc522thread.h
 
 FORMS    += widget.ui

@@ -273,7 +273,7 @@ void atpFt232Spi::initSpiComunication() {
 
         /* Open the first available channel */
         status = p_SPI_OpenChannel(CHANNEL_TO_OPEN,&ftHandle);
-        printf("\nhandle=0x%x status=0x%x\n",(unsigned int)ftHandle,status);
+        qDebug() <<"\n handle=0x%x status=0x%x\n" << (unsigned int)ftHandle <<status;
         status = p_SPI_InitChannel(ftHandle,&channelConf);
 
 #if USE_WRITEREAD
