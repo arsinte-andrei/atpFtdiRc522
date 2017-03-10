@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Widget</string>
   </property>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="switcOn">
    <property name="geometry">
     <rect>
      <x>70</x>
@@ -39,7 +39,7 @@
     <string>init SPI</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_3">
+  <widget class="QPushButton" name="beforeClose">
    <property name="geometry">
     <rect>
      <x>70</x>
@@ -49,7 +49,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>ON</string>
+    <string>Before close</string>
    </property>
   </widget>
   <widget class="QPushButton" name="pushButton_4">

@@ -5,7 +5,7 @@ atpRc522Thread::atpRc522Thread(MFRC522 *rc522, QObject *parent) : QThread(parent
 }
 
 void atpRc522Thread::run(){
-    while (true) {
+    while (repeta) {
         loop();
     }
 
@@ -15,12 +15,19 @@ void atpRc522Thread::loop(){
     continutCard.clear();
     qRegisterMetaType< QMap<byte, QString> >( "QMap<byte, QString>" );
     // Look for new cards
-    if ( ! mfrc522->PICC_IsNewCardPresent())
+    if ( ! mfrc522->PICC_IsNewCardPresent()) {
+       qDebug() << "nici un card nou";
         return;
+    }
+    qDebug() << "MERGE CEVA CEVA ...";
 
     // Select one of the cards
-    if ( ! mfrc522->PICC_ReadCardSerial())
+    if ( ! mfrc522->PICC_ReadCardSerial()) {
+        qDebug() << "nici un serial detectat";
         return;
+    }
+
+    qDebug() << "MERGE";
 
     // Show some details of the PICC (that is: the tag/card)
     QByteArray* img = new QByteArray(reinterpret_cast<const char*>(mfrc522->uid.uidByte), mfrc522->uid.size);
@@ -44,7 +51,9 @@ void atpRc522Thread::loop(){
         // Try the key
         if (try_key(&key)) {
             qDebug() << "Operatiune cu success";
+            qDebug() << continutCard;
             emit cardReadDetails(continutCard);
+
             // Found and reported on the key and block,
             // no need to try other keys for this PICC
             break;

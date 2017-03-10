@@ -6,10 +6,6 @@
 #include <MFRC522.h>
 #include <atprc522thread.h>
 
-#include <atpft232spi.h>
-
-
-
 namespace Ui {
     class Widget;
 }
@@ -21,17 +17,12 @@ public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
 
-
 private slots:
-    void on_pushButton_clicked();
-    void on_pushButton_2_clicked();
-    void on_pushButton_3_clicked();
-
-    void on_pushButton_4_clicked();
+    void on_beforeClose_clicked();
+    void on_switcOn_clicked();
 
 private:
     Ui::Widget *ui;
-    atpFt232Spi *atpftdi;
     MFRC522 *mfrc522;
     atpRc522Thread *rc522Thread;
 };

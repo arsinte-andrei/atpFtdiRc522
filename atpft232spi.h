@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QVector>
 
 #include <Windows.h>
 /* Include D2XX header*/
@@ -22,7 +23,7 @@ public:
     #define START_ADDRESS_EEPROM 	0x00 /*read/write start address inside the EEPROM*/
     #define END_ADDRESS_EEPROM		0x10
     #define RETRY_COUNT_EEPROM		10	/* number of retries if read/write fails */
-    #define CHANNEL_TO_OPEN			0	/*0 for first available channel, 1 for next... */
+    #define CHANNEL_TO_OPEN			0	/*0 for first available channel, 1 for next...  FT232H has only 1 chanel so it has to be chanel 0*/
     #define SPI_SLAVE_0				0
     #define SPI_SLAVE_1				1
     #define SPI_SLAVE_2				2
@@ -42,6 +43,7 @@ public:
     /*FT232H pins value*/
     #define FT_PIN_LOW 0
     #define FT_PIN_HI  1
+    #define FT_PIN_OFF 3
 
     /******************************************************************************/
     /*                                  	SPI         						  */
@@ -104,6 +106,9 @@ public slots:
     void initDllLyb();
     void initSpiComunication();
     bool isDllLybLoaded();
+    int getChannels();
+    int getPinStatus(int pinNo);
+    QVector<uint8> atptransferN(uint8 *buf, uint32 len);
 signals:
 
 private:

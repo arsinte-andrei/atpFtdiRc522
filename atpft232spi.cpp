@@ -68,6 +68,8 @@ FT_STATUS atpFt232Spi::read_byte(uint8 slaveAddress, uint8 address, uint16 *data
         SPI_TRANSFER_OPTIONS_SIZE_IN_BYTES|
         SPI_TRANSFER_OPTIONS_CHIPSELECT_DISABLE);
 
+    qDebug() <<"BUFFER READ: " << buffer;
+
     *data = (uint16)(buffer[1]<<8);
     *data = (*data & 0xFF00) | (0x00FF & (uint16)buffer[0]);
 
@@ -175,16 +177,6 @@ void atpFt232Spi::delay( int millisecondsToWait ) {
 }
 
 void atpFt232Spi::writeGpioPin(int pinNo, int lowHiState){
-    /*TOBE DELETED*/
-        uint8 value;
-        p_FT_ReadGPIO(ftHandle, &value);
-        qDebug() <<value;
-
-        qDebug() <<"PIN: " <<pinNo <<"LOW - HI: " <<lowHiState;
-
-    /*TOBE DELETED*/
-
-
     if( (pinNo>7) || (lowHiState>1) ){
         return;
     }
@@ -192,10 +184,6 @@ void atpFt232Spi::writeGpioPin(int pinNo, int lowHiState){
     uint8 allValuesToWrite = editPinStateValue(pinNo, lowHiState);
     qDebug() <<"uint8 returned:" << allValuesToWrite;
     p_FT_WriteGPIO(ftHandle, allPinsToWrite, allValuesToWrite);
- /*TOBE DELETED*/
-     p_FT_ReadGPIO(ftHandle, &value);
-     qDebug() <<value;
- /*TOBE DELETED*/
 }
 
 void atpFt232Spi::initDllLyb() { /* load library */
@@ -229,10 +217,13 @@ void atpFt232Spi::initDllLyb() { /* load library */
 
 void atpFt232Spi::initSpiComunication() {
     uint16_t SPI_SPEED;
-    SPI_SPEED = (uint16_t)(250000L / DEFAULT_SPI_SPEED);
+    SPI_SPEED = (uint16_t)(2500000000L / DEFAULT_SPI_SPEED);
+    qDebug() <<"Viteza SPI: "<< SPI_SPEED;
 
     FT_STATUS status = FT_OK;
-    FT_DEVICE_LIST_INFO_NODE devList = {0};
+
+    FT_DEVICE_LIST_INFO_NODE devList = {0}; //Flags; Type; ID; LocId; SerialNumber; Description; ftHandle;
+
     ChannelConfig channelConf = {0};
     uint8 address = 0;
     channels = 0;
@@ -247,6 +238,7 @@ void atpFt232Spi::initSpiComunication() {
     channelConf.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3 | SPI_CONFIG_OPTION_CS_ACTIVELOW;
     channelConf.Pin = 0x00000000;/*FinalVal-FinalDir-InitVal-InitDir (for dir 0=in, 1=out)*/
 
+    //For FT232H will return channels = 1 if everithing is ok
     status = p_SPI_GetNumChannels(&channels);
     qDebug() <<"Number of available SPI channels = " << channels;
 
@@ -262,20 +254,14 @@ void atpFt232Spi::initSpiComunication() {
             qDebug() <<"SerialNumber=" <<devList.SerialNumber;
             qDebug() <<"Description=" <<devList.Description;
             qDebug() <<"ftHandle=" <<devList.ftHandle;
-/*            printf("		Flags=0x%x\n",devList.Flags);
-            printf("		Type=0x%x\n",devList.Type);
-            printf("		ID=0x%x\n",devList.ID);
-            printf("		LocId=0x%x\n",devList.LocId);
-            printf("		SerialNumber=%s\n",devList.SerialNumber);
-            printf("		Description=%s\n",devList.Description);
-            printf("		ftHandle=0x%x\n",(unsigned int)devList.ftHandle);/*is 0 unless open*/
         }
 
         /* Open the first available channel */
         status = p_SPI_OpenChannel(CHANNEL_TO_OPEN,&ftHandle);
-        qDebug() <<"\n handle=0x%x status=0x%x\n" << (unsigned int)ftHandle <<status;
+        qDebug() <<"Canalul deschis FTHandle: " << (unsigned int)ftHandle <<status;
         status = p_SPI_InitChannel(ftHandle,&channelConf);
-
+        qDebug() <<"initializarea SPI: " << status;
+return;
 #if USE_WRITEREAD
         {
             uint8 k,l;
@@ -323,6 +309,47 @@ bool atpFt232Spi::isDllLybLoaded() {
     return libDllLoaded;
 }
 
+int atpFt232Spi::getChannels() {
+    return (int)channels;
+}
+
+int atpFt232Spi::getPinStatus(int pinNo) {
+     uint8 value;
+    p_FT_ReadGPIO(ftHandle, &value);
+//    qDebug() <<value;
+    int dec = (int)value;
+//    qDebug() <<dec;
+    QString binnumber, finalValue;
+    binnumber.setNum(dec,2);
+//    qDebug() << binnumber[1];
+
+    if ((value == 0) || (value == 255)) {
+     return FT_PIN_OFF;
+    }
+    finalValue = binnumber[pinNo-1];
+//    qDebug() << finalValue;
+    return finalValue.toInt();
+}
+
+QVector<uint8> atpFt232Spi::atptransferN(uint8 *buf, uint32 len){
+    FT_STATUS status;
+    QVector<uint8> ret;
+    uint8 buffer2;
+    uint32 sizeTransfered = 0;
+    qDebug()<< buf << "SI BUF{0}: " << buf[0];
+    for (int var = 0; var < len; var++) {
+        qDebug() << buf[var];
+//        status = p_SPI_ReadWrite(ftHandle, &buf[var], &buffer2, len, &sizeTransfered,
+        status = p_SPI_ReadWrite(ftHandle, &buffer2, &buf[var], len, &sizeTransfered,
+        SPI_TRANSFER_OPTIONS_SIZE_IN_BYTES|
+        SPI_TRANSFER_OPTIONS_CHIPSELECT_ENABLE);
+        ret.insert(var, buffer2);
+        qDebug()<< "**1** " << sizeTransfered << "**2** " << buf[var] << "**3** " << buf <<"**4**" << buffer2;
+    }
+    qDebug()<< "**** " << sizeTransfered << "**** " << buf;
+    return ret;
+}
+
 void atpFt232Spi::resetPinstateValue() {
     pinStateValue[1] = 0;
     pinStateValue[2] = 0;
@@ -335,17 +362,18 @@ void atpFt232Spi::resetPinstateValue() {
 }
 
 uint8 atpFt232Spi::editPinStateValue(int pinNo, int value) {
-    bool valoare = false;
+   bool valoare = false;
    pinStateValue[pinNo] = value;
    QString pinValStr ="";
    for (int var = 1; var < 9; var++) {
-       qDebug() <<"VAR: " <<var;
+//       qDebug() <<"VAR: " <<var;
        pinValStr.append(QString::number(pinStateValue[var]));
-       qDebug() <<"STR: " <<pinValStr;
+//       qDebug() <<"STR: " <<pinValStr;
    }
    qDebug() <<"STR: " <<pinValStr;
    int myVal = pinValStr.toInt(&valoare, 2);
    qDebug() <<"int: " <<myVal;
+   qDebug() <<getPinStatus(pinNo);
 
    return (uint8)myVal;
 }

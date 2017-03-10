@@ -6,8 +6,7 @@
 #include <MFRC522.h>
 #include <cstdio>
 
-//TODO - #define  DEFAULT_SPI_SPEED 5000L
-#define  PIN FT_PIN_C07
+#define  PIN FT_PIN_C01
 /**
  * Constructor.
  * Prepares the output pins
@@ -29,10 +28,15 @@ MFRC522::MFRC522(QObject *parent) : QObject(parent){
 void MFRC522::PCD_WriteRegister(	byte reg,		///< The register to write to. One of the PCD_Register enums.
                                     byte value		///< The value to write.
                                ) {
-    char buff[2];
+    uint8 buff[2]; //char before
     buff[0] = (char)((reg) & 0x7E);
     buff[1] = (char)value;
+    qDebug() <<"Nevoia 1: " <<reg <<" = " << buff[0] << " & " << value <<" = " << buff[1] << " => " <<buff;
+    QVector<uint8> ret;
+    ret = atpFtdi->atptransferN(buff, 2);
+    qDebug() <<"Ret: " << ret;
 //TODO    bcm2835_spi_transfern(buff, 2);
+
 } // End PCD_WriteRegister()
 
 /**
@@ -54,10 +58,15 @@ void MFRC522::PCD_WriteRegister(	byte reg,		///< The register to write to. One o
  */
 byte MFRC522::PCD_ReadRegister(	byte reg	///< The register to read from. One of the PCD_Register enums.
                               ) {
-    char buff[2];
-    buff[0] = ((reg) & 0x7E) | 0x80;
+    uint8 buff[2]; //char before
+    buff[0] = (char)((reg) & 0x7E) | 0x80;
 //TODO    bcm2835_spi_transfern(buff, 2);
-    return (uint8_t)buff[1];
+    qDebug() <<"Buff: " << buff;
+    QVector<uint8> ret;
+    ret = atpFtdi->atptransferN(buff, 2);
+    qDebug() <<"Nevoia 2";
+    qDebug() <<"Buff: " << buff <<"Ret: " << ret;
+    return (uint8_t)ret.value(1);
 
 } // End PCD_ReadRegister()
 
@@ -78,6 +87,7 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 	byte index = 0;							// Index in values array.
 	count--;								// One read is performed outside of the loop
 //TODO    bcm2835_spi_transfer(address);
+    qDebug() <<"Nevoia 3";
     uint16 data = 0;
     atpFtdi->read_byte(SPI_SLAVE_0, address, &data);
     qDebug () <<"AICI: " <<data;
@@ -89,20 +99,24 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 				mask |= (1 << i);
 			}
 			// Read value and tell that we want to read the same address again.    
+            qDebug() <<"Nevoia 4";
 //TODO            byte value = bcm2835_spi_transfer(address);
             atpFtdi->read_byte(SPI_SLAVE_0, address, &data);
             qDebug () <<"AICI1: " <<data;
 			// Apply mask to both current value of values[0] and the new data in value.
+            qDebug() <<"Nevoia 5";
 //TODO			values[0] = (values[index] & ~mask) | (value & mask);
             values[0] = (values[index] & ~mask) | (data & mask);
 		}
-		else { // Normal case           
+        else { // Normal case
+            qDebug() <<"Nevoia 6";
 //TODO           values[index] = bcm2835_spi_transfer(address);     // Read value and tell that we want to read the same address again.
             atpFtdi->read_byte(SPI_SLAVE_0, address, &data);
             qDebug () <<"AICI2: " <<data;
 		}
 		index++;
 	}
+    qDebug() <<"Nevoia 7";
 //TODO    values[index] = bcm2835_spi_transfer(0);                  // Read the final byte. Send 0 to stop reading.
 } // End PCD_ReadRegister()
 
@@ -173,22 +187,25 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
  * Initializes the MFRC522 chip.
  */
 void MFRC522::PCD_Init() {
-    //TODO acceseaza pin si da power
-//    if(bcm2835_gpio_lev(PIN) == LOW) {   //The MFRC522 chip is in power down mode.
-        atpFtdi->writeGpioPin(PIN, FT_PIN_HI); // Exit power down mode. This triggers a hard reset.
-        atpFtdi->delay(50);                       // Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
-//    } else { // Perform a soft reset
-		PCD_Reset();
-//    }
-	
+    qDebug() << "Pin status: " << atpFtdi->getPinStatus(PIN);
+    if (!(atpFtdi->getPinStatus(PIN) == 1)) {
+        qDebug() << "Pas 1";
+         atpFtdi->writeGpioPin(PIN, FT_PIN_HI); // Exit power down mode. This triggers a hard reset.
+         // Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
+         atpFtdi->delay(50);
+    } else { // Perform a soft reset
+        qDebug() << "Pas 2";
+        PCD_Reset();
+    }
+
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// f_timer = 13.56 MHz / (2*TPreScaler+1) where TPreScaler = [TPrescaler_Hi:TPrescaler_Lo].
 	// TPrescaler_Hi are the four low bits in TModeReg. TPrescaler_Lo is TPrescalerReg.
+
 	PCD_WriteRegister(TModeReg, 0x80);			// TAuto=1; timer starts automatically at the end of the transmission in all communication modes at all speeds
 	PCD_WriteRegister(TPrescalerReg, 0xA9);		// TPreScaler = TModeReg[3..0]:TPrescalerReg, ie 0x0A9 = 169 => f_timer=40kHz, ie a timer period of 25�s.
 	PCD_WriteRegister(TReloadRegH, 0x03);		// Reload timer with 0x3E8 = 1000, ie 25ms before timeout.
 	PCD_WriteRegister(TReloadRegL, 0xE8);
-	
 	PCD_WriteRegister(TxASKReg, 0x40);		// Default 0x00. Force a 100 % ASK modulation independent of the ModGsPReg register setting
 	PCD_WriteRegister(ModeReg, 0x3D);		// Default 0x3F. Set the preset value for the CRC coprocessor for the CalcCRC command to 0x6363 (ISO 14443-3 part 6.2.4)
 	PCD_AntennaOn();						// Enable the antenna driver pins TX1 and TX2 (they were disabled by the reset)
@@ -198,15 +215,19 @@ void MFRC522::PCD_Init() {
  * Performs a soft reset on the MFRC522 chip and waits for it to be ready again.
  */
 void MFRC522::PCD_Reset() {
+    qDebug() << "Pas reset 1";
 	PCD_WriteRegister(CommandReg, PCD_SoftReset);	// Issue the SoftReset command.
+    qDebug() << "Pas reset 2";
 	// The datasheet does not mention how long the SoftRest command takes to complete.
 	// But the MFRC522 might have been in soft power-down mode (triggered by bit 4 of CommandReg) 
 	// Section 8.8.2 in the datasheet says the oscillator start-up time is the start up time of the crystal + 37,74�s. Let us be generous: 50ms.
     atpFtdi->delay(50);
 	// Wait for the PowerDown bit in CommandReg to be cleared
+    qDebug() << "Pas reset 3";
 	while (PCD_ReadRegister(CommandReg) & (1<<4)) {
 		// PCD still restarting - unlikely after waiting 50ms, but better safe than sorry.
 	}
+    qDebug() << "Pas reset 4";
 } // End PCD_Reset()
 
 /**
@@ -261,23 +282,24 @@ bool MFRC522::PCD_PerformSelfTest() {
     // This follows directly the steps outlined in 16.1.1
 
     // 1. Perform a soft reset.
+    qDebug() << "Test 1";
     PCD_Reset();
-
+    qDebug() << "Test 2";
     // 2. Clear the internal buffer by writing 25 bytes of 00h
     byte ZEROES[25] = {0x00};
     PCD_SetRegisterBitMask(FIFOLevelReg, 0x80); // flush the FIFO buffer
     PCD_WriteRegister(FIFODataReg, 25, ZEROES); // write 25 bytes of 00h to FIFO
     PCD_WriteRegister(CommandReg, PCD_Mem); // transfer to internal buffer
-
+qDebug() << "Test 3";
     // 3. Enable self-test
     PCD_WriteRegister(AutoTestReg, 0x09);
-
+qDebug() << "Test 4";
     // 4. Write 00h to FIFO buffer
     PCD_WriteRegister(FIFODataReg, 0x00);
-
+qDebug() << "Test 5";
     // 5. Start self-test by issuing the CalcCRC command
     PCD_WriteRegister(CommandReg, PCD_CalcCRC);
-
+qDebug() << "Test 6";
     // 6. Wait for self-test to complete
     word i;
     byte n;
@@ -288,7 +310,7 @@ bool MFRC522::PCD_PerformSelfTest() {
         }
     }
     PCD_WriteRegister(CommandReg, PCD_Idle);        // Stop calculating CRC for new content in the FIFO.
-
+qDebug() << "Test 7";
     // 7. Read out resulting 64 bytes from the FIFO buffer.
     byte result[64];
     PCD_ReadRegister(FIFODataReg, 64, result, 0);
@@ -491,15 +513,20 @@ byte MFRC522::PICC_REQA_or_WUPA(	byte command, 		///< The command to send - PICC
 	byte status;
 	
 	if (bufferATQA == NULL || *bufferSize < 2) {	// The ATQA response is 2 bytes long.
+        qDebug() << "Nu este loc";
         return RC_STATUS_NO_ROOM;
 	}
+    qDebug() << "Este loc";
 	PCD_ClearRegisterBitMask(CollReg, 0x80);		// ValuesAfterColl=1 => Bits received after collision are cleared.
+    qDebug() << "clear register";
 	validBits = 7;									// For REQA and WUPA we need the short frame format - transmit only 7 bits of the last (and only) byte. TxLastBits = BitFramingReg[2..0]
 	status = PCD_TransceiveData(&command, 1, bufferATQA, bufferSize, &validBits);
+    qDebug() << " transcieve:"  << status;
     if (status != RC_STATUS_OK) {
 		return status;
 	}
 	if (*bufferSize != 2 || validBits != 0) {		// ATQA must be exactly 16 bits.
+        qDebug() << "Este o problema";
         return RC_STATUS_ERROR;
 	}
     return RC_STATUS_OK;

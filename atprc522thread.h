@@ -16,6 +16,7 @@ class atpRc522Thread : public QThread {
         atpRc522Thread(MFRC522 *rc522, QObject *parent);
         void run() Q_DECL_OVERRIDE;
         QMap<byte, QString> continutCard;
+        bool repeta;
 
     signals:
         void error();
